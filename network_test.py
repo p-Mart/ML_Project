@@ -36,7 +36,7 @@ plt.xlabel(r'$x_1$')
 plt.ylabel(r'$x_2$')
 plt.title("Training Set")
 
-layer_1 = Sigmoid(X.shape[1] , hidden_nodes)
+layer_1 = Relu(X.shape[1] , hidden_nodes)
 layer_2 = Sigmoid(hidden_nodes, 1)
 
 model = Network([layer_1, layer_2])
