@@ -40,17 +40,20 @@ class Network:
 		for i in reversed(range(self.depth)):
 			#Initial gradient computed at the output layer
 			if (i == self.depth - 1):
-				gradients[i] = (y - outputs[i])*outputs[i]*(1 - outputs[i])
+				gradients[i] = (y - outputs[i])*self.layers[i].derivative(outputs[i-1])
 				#print gradients[i].shape
 
 			#Gradients computed backwards from the output layer to the input layer
-			else:
+			elif(i < self.depth - 1 and i > 0):
 				#print i, self.layers[i+1].weights.shape
 				#print outputs[i].shape
 				#print gradients[i].shape
 				#print gradients[i+1].shape
 				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
-								outputs[i][1:]*(1 - outputs[i][1:]))
+								self.layers[i].derivative(outputs[i-1]))
+			else:
+				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
+								self.layers[i].derivative(x))
 				
 
 		return gradients

@@ -17,3 +17,6 @@ class Sigmoid:
 		#with a shape of {1 x input_size}
 
 		return sigmoid(np.dot(self.weights, x.T))
+
+	def derivative(self, x):
+		return (self.output(x)*(1 - self.output(x)))
