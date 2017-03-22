@@ -3,11 +3,25 @@ from Layers import *
 
 class Network:
 
-	def __init__(self, layers, learning_rate = 1):
+	def __init__(self, layers, learning_rate = 1, func = "squared error"):
 		self.layers = layers
 		self.depth = len(layers)
 
 		self.learning_rate = learning_rate
+		self.func = func
+
+	def lossFunction(self, y, output, func = "squared error"):
+		if (func == "squared error"):
+			return (0.5 * np.sum(np.power((y - output),2)))
+		elif(func == "categorical crossentropy"):
+			#Might need to do 1 / N
+			return(-(np.sum(y*np.log(output) + (1 - y)*np.log(1 - output))))
+
+	def lossDerivative(self, y, output, func = "squared error"):
+		if (func == "squared error"):
+			return (y - output)
+		elif (func == "categorical crossentropy"):
+			return ((output - y) / (output*(1 - output)))
 
 	def getOutputs(self, sample):
 		outputs = []
@@ -40,7 +54,8 @@ class Network:
 		for i in reversed(range(self.depth)):
 			#Initial gradient computed at the output layer
 			if (i == self.depth - 1):
-				gradients[i] = (y - outputs[i])*self.layers[i].derivative(outputs[i-1])
+				gradients[i] = (self.lossDerivative(y, outputs[i], self.func) *
+								self.layers[i].derivative(outputs[i-1]))
 				#print gradients[i].shape
 
 			#Gradients computed backwards from the output layer to the input layer
@@ -99,7 +114,7 @@ class Network:
 			x = X[i,:]
 			outputs[i] = self.getOutputs(x)[self.depth-1]
 		
-		loss = 0.5 * np.sum(np.power((Y - outputs),2))
+		loss = self.lossFunction(Y, outputs, self.func)
 		print "Loss:", loss
 		return outputs
 

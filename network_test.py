@@ -26,7 +26,7 @@ Y_test = (((X_test[:,0] - a)**2 + (X_test[:,1] - b)**2) < r**2)
 hidden_nodes = 10
 output_nodes = 1
 learning_rate = 1
-number_epochs = 100
+number_epochs = 20000
 
 
 colors = ['red','blue']
@@ -39,7 +39,11 @@ plt.title("Training Set")
 layer_1 = Relu(X.shape[1] , hidden_nodes)
 layer_2 = Softmax(hidden_nodes, 1)
 
-model = Network([layer_1, layer_2])
+model = Network([layer_1, layer_2],
+					learning_rate = learning_rate,
+					func = "categorical crossentropy"
+				)
+
 model.train(X, Y, number_epochs)
 outputs = model.predict(X_test, Y_test)
 print outputs
