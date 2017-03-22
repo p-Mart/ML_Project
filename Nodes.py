@@ -10,4 +10,7 @@ def smoothRelu(x):
 	return np.log(1 + np.exp(x))
 
 def softmax(x):
-	return np.exp(x) / np.sum(np.exp(x))
+	#Note the x - np.max(x).
+	#This is for numerical stability in case np.exp encounters
+	#large values of x.
+	return np.exp(x - np.max(x)) / np.sum(np.exp(x))

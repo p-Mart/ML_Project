@@ -26,7 +26,7 @@ Y_test = (((X_test[:,0] - a)**2 + (X_test[:,1] - b)**2) < r**2)
 hidden_nodes = 10
 output_nodes = 1
 learning_rate = 1
-number_epochs = 40000
+number_epochs = 100
 
 
 colors = ['red','blue']
@@ -37,12 +37,12 @@ plt.ylabel(r'$x_2$')
 plt.title("Training Set")
 
 layer_1 = Relu(X.shape[1] , hidden_nodes)
-layer_2 = Sigmoid(hidden_nodes, 1)
+layer_2 = Softmax(hidden_nodes, 1)
 
 model = Network([layer_1, layer_2])
 model.train(X, Y, number_epochs)
 outputs = model.predict(X_test, Y_test)
-
+print outputs
 for i in range(len(outputs)):
 	outputs[i] = binary(outputs[i])
 

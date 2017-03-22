@@ -47,7 +47,7 @@ class Relu:
 				outputs[i] = 1.
 
 		return outputs
-'''
+
 class Softmax:
 
 	def __init__(self, input_size, nodes):
@@ -66,12 +66,4 @@ class Softmax:
 		return softmax(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
-		derivatives = self.output(x)
-		for i in range(len(outputs)):
-			if(outputs[i] <= 0):
-				outputs[i] = 0.
-			else:
-				outputs[i] = 1.
-
-		return outputs
-'''
+		return (self.output(x)*(1 - self.output(x)))#This MIGHT be wrong
