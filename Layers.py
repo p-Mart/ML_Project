@@ -49,7 +49,7 @@ class Relu:
 		return outputs
 
 class Softmax:
-
+	'''Note: softmax must be used for categorical crossentropy'''
 	def __init__(self, input_size, nodes):
 		self.input_size = input_size
 		self.nodes = nodes
@@ -62,8 +62,9 @@ class Softmax:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-
+	
 		return softmax(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
-		return (self.output(x)*(1 - self.output(x)))#This MIGHT be wrong
+		#return (self.output(x)*(1 - self.output(x)))#This MIGHT be wrong
+		return 1.

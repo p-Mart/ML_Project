@@ -19,9 +19,12 @@ class Network:
 
 	def lossDerivative(self, y, output, func = "squared error"):
 		if (func == "squared error"):
-			return (y - output)
+			return (-(y - output))
 		elif (func == "categorical crossentropy"):
-			return ((output - y) / (output*(1 - output)))
+			derivative = np.array(output)
+			i = list(y).index(1.) #Get the index containing the correct class
+			derivative[i] = (derivative[i] - 1.)
+			return derivative
 
 	def getOutputs(self, sample):
 		outputs = []
@@ -33,7 +36,8 @@ class Network:
 				x = outputs[i]
 			else:
 				outputs.append(self.layers[i].output(x))
-			
+		
+
 			#outputs.append(self.layers[i].output(x))
 			#x = outputs[i]
 
@@ -44,11 +48,17 @@ class Network:
 
 		gradients = []
 		outputs = self.getOutputs(x)
-
+		#Calculate the backwards pass of gradients.
+		#The number of gradients per layer is the number of nodes(excluding
+		#the bias unit) in that layer.
 
 		for i in range(self.depth):
-			gradients.append(np.ones((outputs[i].shape[0] - 1,1)))
-			
+			if(i < self.depth - 1):
+				gradients.append(np.ones((outputs[i].shape[0] - 1,1)))
+			else:
+				#There's no bias unit on the final layer.
+				gradients.append(np.ones((outputs[i].shape[0],1)))
+		
 
 		#Backpropagation algorithm
 		for i in reversed(range(self.depth)):
@@ -56,7 +66,9 @@ class Network:
 			if (i == self.depth - 1):
 				gradients[i] = (self.lossDerivative(y, outputs[i], self.func) *
 								self.layers[i].derivative(outputs[i-1]))
-				#print gradients[i].shape
+				#print y
+				#print outputs[1]
+				#print gradients[i]
 
 			#Gradients computed backwards from the output layer to the input layer
 			elif(i < self.depth - 1 and i > 0):
@@ -88,21 +100,24 @@ class Network:
 			outputs = self.getOutputs(x)
 			gradients = self.getGradients(x,y)
 			#x = x.reshape((X.shape[1], 1))
-			
+			#print outputs
+			#print gradients
+
 			for i in range(self.depth):
 				#print self.layers[i].weights.shape
 				#print i
 				if (i == 0):
-					self.layers[i].weights =self.layers[i].weights + (self.learning_rate*
+					self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
 										np.outer(gradients[i],x.T))
 				#elif (i > 0 and i < self.depth - 1):
 				#	self.layers[i].weights =self.layers[i].weights + (self.learning_rate*
 				#						np.outer(gradients[i],outputs[i-1]))
 				else:
-					self.layers[i].weights =self.layers[i].weights + (self.learning_rate*
+					self.layers[i].weights =self.layers[i].weights  - (self.learning_rate*
 										np.outer(gradients[i],outputs[i-1]))
 
-		
+			#print self.layers[0].weights
+			#print self.layers[1].weights
 
 	def predict(self, X, Y):
 
@@ -114,8 +129,8 @@ class Network:
 			x = X[i,:]
 			outputs[i] = self.getOutputs(x)[self.depth-1]
 		
-		loss = self.lossFunction(Y, outputs, self.func)
-		print "Loss:", loss
+		#loss = self.lossFunction(Y, outputs, self.func)
+		#print "Loss:", loss
 		return outputs
 
 if __name__ == "__main__":
