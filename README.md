@@ -3,8 +3,8 @@ Work in progress for CAP6610 to develop a speech recognition algorithm from scra
 * Soundfile: for converting audio files to .wav files
 * numpy, scipy, matplotlib
 * python_speech_features: for computing the MFCC's
-## Contents
-### Architecture-related modules
+# Contents
+## Architecture-related modules
 * #### Nodes.py
 Contains base functions for different types of nodes, which are used in the Layers class.
 * #### Layers.py
@@ -45,7 +45,7 @@ layer_3 = Sigmoid(hidden_nodes_2, outputs)
 
 model = Network([layer_1,layer_2,layer_3])
 ```
-### Input-handling modules
+## Input-handling modules
 * #### ToWav.py
 Converts an input sound file into a .wav. Writes file to current directory with the same filename.
 
