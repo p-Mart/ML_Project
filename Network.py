@@ -9,6 +9,7 @@ class Network:
 
 		self.learning_rate = learning_rate
 		self.func = func
+		self.outputs = []
 
 	def lossFunction(self, y, output, func = "squared error"):
 		if (func == "squared error"):
@@ -47,25 +48,25 @@ class Network:
 	def getGradients(self, x, y):
 
 		gradients = []
-		outputs = self.getOutputs(x)
+		#self.outputs = self.getOutputs(x)
 		#Calculate the backwards pass of gradients.
 		#The number of gradients per layer is the number of nodes(excluding
 		#the bias unit) in that layer.
 
 		for i in range(self.depth):
 			if(i < self.depth - 1):
-				gradients.append(np.ones((outputs[i].shape[0] - 1,1)))
+				gradients.append(np.ones((self.outputs[i].shape[0] - 1,1)))
 			else:
 				#There's no bias unit on the final layer.
-				gradients.append(np.ones((outputs[i].shape[0],1)))
+				gradients.append(np.ones((self.outputs[i].shape[0],1)))
 		
 
 		#Backpropagation algorithm
 		for i in reversed(range(self.depth)):
 			#Initial gradient computed at the output layer
 			if (i == self.depth - 1):
-				gradients[i] = (self.lossDerivative(y, outputs[i], self.func) *
-								self.layers[i].derivative(outputs[i-1]))
+				gradients[i] = (self.lossDerivative(y, self.outputs[i], self.func) *
+								self.layers[i].derivative(self.outputs[i-1]))
 				#print y
 				#print outputs[1]
 				#print gradients[i]
@@ -77,7 +78,7 @@ class Network:
 				#print gradients[i].shape
 				#print gradients[i+1].shape
 				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
-								self.layers[i].derivative(outputs[i-1]))
+								self.layers[i].derivative(self.outputs[i-1]))
 			else:
 				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
 								self.layers[i].derivative(x))
@@ -97,7 +98,7 @@ class Network:
 			x = X[sample_number,:]
 			y = Y[sample_number]
 
-			outputs = self.getOutputs(x)
+			self.outputs = self.getOutputs(x)
 			gradients = self.getGradients(x,y)
 			#x = x.reshape((X.shape[1], 1))
 			#print outputs
@@ -113,8 +114,8 @@ class Network:
 				#	self.layers[i].weights =self.layers[i].weights + (self.learning_rate*
 				#						np.outer(gradients[i],outputs[i-1]))
 				else:
-					self.layers[i].weights =self.layers[i].weights  - (self.learning_rate*
-										np.outer(gradients[i],outputs[i-1]))
+					self.layers[i].weights = (self.layers[i].weights  -
+						 (self.learning_rate*np.outer(gradients[i],self.outputs[i-1])))
 
 			#print self.layers[0].weights
 			#print self.layers[1].weights
@@ -123,15 +124,15 @@ class Network:
 
 		#Initialize biases along with inputs to the network
 		X = np.hstack((np.ones((X.shape[0],1)), X))
-		outputs = np.ones(Y.shape)
+		predictions = np.ones(Y.shape)
 
-		for i in range(outputs.shape[0]):
+		for i in range(Y.shape[0]):
 			x = X[i,:]
-			outputs[i] = self.getOutputs(x)[self.depth-1]
+			predictions[i] = self.getOutputs(x)[self.depth-1]
 		
 		#loss = self.lossFunction(Y, outputs, self.func)
 		#print "Loss:", loss
-		return outputs
+		return predictions
 
 if __name__ == "__main__":
 	layers = []
