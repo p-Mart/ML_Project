@@ -1,5 +1,7 @@
 import numpy as np
+import sys
 from Layers import *
+
 
 class Network:
 
@@ -11,17 +13,20 @@ class Network:
 		self.func = func
 		self.outputs = []
 
-	def lossFunction(self, y, output, func = "squared error"):
-		if (func == "squared error"):
+	def lossFunction(self, y, output):
+		
+		if (self.func == "squared error"):
 			return (0.5 * np.sum(np.power((y - output),2)))
-		elif(func == "categorical crossentropy"):
+		elif(self.func == "categorical crossentropy"):
 			#Might need to do 1 / N
-			return(-(np.sum(y*np.log(output) + (1 - y)*np.log(1 - output))))
+			i = list(y).index(1.)
+			loss = -np.log(output[i])
+			return loss
 
-	def lossDerivative(self, y, output, func = "squared error"):
-		if (func == "squared error"):
+	def lossDerivative(self, y, output):
+		if (self.func == "squared error"):
 			return (-(y - output))
-		elif (func == "categorical crossentropy"):
+		elif (self.func == "categorical crossentropy"):
 			derivative = np.array(output)
 			i = list(y).index(1.) #Get the index containing the correct class
 			derivative[i] = (derivative[i] - 1.)
@@ -65,7 +70,7 @@ class Network:
 		for i in reversed(range(self.depth)):
 			#Initial gradient computed at the output layer
 			if (i == self.depth - 1):
-				gradients[i] = (self.lossDerivative(y, self.outputs[i], self.func) *
+				gradients[i] = (self.lossDerivative(y, self.outputs[i]) *
 								self.layers[i].derivative(self.outputs[i-1]))
 				#print y
 				#print outputs[1]
@@ -90,9 +95,15 @@ class Network:
 
 		#Initialize biases along with inputs to the network
 		X = np.hstack((np.ones((X.shape[0],1)), X))
+		
+		#Keeping track of the best result
+		best_loss = np.inf
 
 		#Stochastic Gradient Descent
 		for i in range(number_epochs):
+			
+			sys.stdout.write("Training progress: [%d / %d] \r" %(i + 1, number_epochs))
+			sys.stdout.flush()
 
 			sample_number = np.random.randint(X.shape[0])
 			x = X[sample_number,:]
@@ -116,9 +127,14 @@ class Network:
 				else:
 					self.layers[i].weights = (self.layers[i].weights  -
 						 (self.learning_rate*np.outer(gradients[i],self.outputs[i-1])))
+			
+			loss = self.lossFunction(y, self.outputs[self.depth-1])
+			if(loss < best_loss):
+				best_loss = loss
+			
+		sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
+		sys.stdout.flush()
 
-			#print self.layers[0].weights
-			#print self.layers[1].weights
 
 	def predict(self, X, Y):
 
