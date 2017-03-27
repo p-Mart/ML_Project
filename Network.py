@@ -2,7 +2,6 @@ import numpy as np
 import sys
 from Layers import *
 
-
 class Network:
 
 	def __init__(self, layers, learning_rate = 1, func = "squared error"):
@@ -35,25 +34,19 @@ class Network:
 	def getOutputs(self, sample):
 		outputs = []
 		x = sample
+		#Feedforward calculation of the outputs at each layer.
 		for i in range(self.depth):
-			
 			if(i < self.depth - 1):
 				outputs.append(np.hstack((1,self.layers[i].output(x))))
 				x = outputs[i]
 			else:
 				outputs.append(self.layers[i].output(x))
 		
-
-			#outputs.append(self.layers[i].output(x))
-			#x = outputs[i]
-
-
 		return outputs
 
 	def getGradients(self, x, y):
 
 		gradients = []
-		#self.outputs = self.getOutputs(x)
 		#Calculate the backwards pass of gradients.
 		#The number of gradients per layer is the number of nodes(excluding
 		#the bias unit) in that layer.
@@ -73,7 +66,7 @@ class Network:
 				gradients[i] = (self.lossDerivative(y, self.outputs[i]) *
 								self.layers[i].derivative(self.outputs[i-1]))
 				#print y
-				#print outputs[1]
+				#print outputs[i]
 				#print gradients[i]
 
 			#Gradients computed backwards from the output layer to the input layer
@@ -111,23 +104,22 @@ class Network:
 
 			self.outputs = self.getOutputs(x)
 			gradients = self.getGradients(x,y)
-			#x = x.reshape((X.shape[1], 1))
+			
 			#print outputs
 			#print gradients
-
+			
+			#Weight update
 			for i in range(self.depth):
 				#print self.layers[i].weights.shape
 				#print i
 				if (i == 0):
 					self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
 										np.outer(gradients[i],x.T))
-				#elif (i > 0 and i < self.depth - 1):
-				#	self.layers[i].weights =self.layers[i].weights + (self.learning_rate*
-				#						np.outer(gradients[i],outputs[i-1]))
 				else:
 					self.layers[i].weights = (self.layers[i].weights  -
 						 (self.learning_rate*np.outer(gradients[i],self.outputs[i-1])))
 			
+			#Calculate the loss on this example.
 			loss = self.lossFunction(y, self.outputs[self.depth-1])
 			if(loss < best_loss):
 				best_loss = loss
@@ -146,17 +138,5 @@ class Network:
 			x = X[i,:]
 			predictions[i] = self.getOutputs(x)[self.depth-1]
 		
-		#loss = self.lossFunction(Y, outputs, self.func)
-		#print "Loss:", loss
 		return predictions
 
-if __name__ == "__main__":
-	layers = []
-
-	layer_1 = Sigmoid(nodes = 10, input_size = 11)
-	layer_2 = Sigmoid(nodes = 9, input_size = 10)
-	layer_3 = Sigmoid(nodes = 10, input_size = 9)
-
-	layers.extend((layer_1,layer_2,layer_3))
-
-	#model = Network(layers)
