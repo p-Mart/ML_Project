@@ -9,7 +9,7 @@ Work in progress for CAP6610 to develop a speech recognition algorithm from scra
 Contains base functions for different types of nodes, which are used in the Layers class.
 * #### Layers.py
 Contains different layer classes which are passed into the Network class.
-Current layers are: Sigmoid, Relu, and Softmax. (Note that softmax only works
+Current layers are: Sigmoid, Relu, and Softmax, and Max Pooling. (Note that softmax only works
 for categorical crossentropy at the moment)
 
 *Usage:*
