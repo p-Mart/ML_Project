@@ -97,4 +97,41 @@ class MaxPool:
 		return pool
 
 
+class Convolutional:
 
+	def __init__(self, input_shape, number_filters,spatial_extent,stride,zero_padding):
+		
+		self.k = number_filters
+		self.f = spatial_extent
+		self.s = stride
+		self.p = zero_padding
+
+		#Output shape calculation
+		self.w = (input_shape[1] - self.f +2*self.p)/self.s + 1
+		self.h = (input_shape[0] - self.f +2*self.p)/self.s + 1
+		self.d = self.k
+
+		#Parameter sharing of weights
+		self.weights = np.random.rand(self.k, self.f * self.f*input_shape[2])
+
+	def im2col(self, x):
+		total_fields = self.w*self.h
+		x_h,x_w,x_d = x.shape
+		X_col = np.empty((self.f*self.f*x_d,total_fields))
+
+		k = 0
+		for i in range(0,x_h-self.f+1,self.s):
+			for j in range(0,x_w-self.f+1,self.s):
+				receptive_field = x[i:(i+self.f),j:(j+self.f),:]
+				receptive_field=receptive_field.reshape(
+							self.f*self.f*x_d)
+				X_col[:,k] = receptive_field
+				k += 1
+		
+		return X_col
+
+	def output(self, x):
+		x_col = self.im2col(x)
+		out = np.dot(self.weights,x_col)
+		out = out.reshape(self.h,self.w,self.d)
+		return out
