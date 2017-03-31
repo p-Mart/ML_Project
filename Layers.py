@@ -5,10 +5,10 @@ class Sigmoid:
 
 	def __init__(self, input_shape, nodes):
 		self.input_shape = input_shape
-		self.input_size = sum(input_shape)
+		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.nodes = nodes
 
-		self.weights = np.random.rand(nodes, self.input_size+1)
+		self.weights = np.random.rand(nodes, self.input_size)
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -16,7 +16,7 @@ class Sigmoid:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-
+		x = x.reshape((1, self.input_size))
 		return sigmoid(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
@@ -26,10 +26,10 @@ class Relu:
 
 	def __init__(self, input_shape, nodes):
 		self.input_shape = input_shape
-		self.input_size = sum(input_shape)
+		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.nodes = nodes
+		self.weights = np.random.rand(nodes, self.input_size)
 
-		self.weights = np.random.rand(nodes, self.input_size+1)
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -37,7 +37,8 @@ class Relu:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-
+		x = x.reshape((1, self.input_size))
+		#x = np.hstack(([[1]], x)) #Temporary for debugging
 		return relu(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
@@ -54,10 +55,10 @@ class Softmax:
 	'''Note: softmax must be used for categorical crossentropy'''
 	def __init__(self, input_shape, nodes):
 		self.input_shape = input_shape
-		self.input_size = sum(input_shape)
+		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.nodes = nodes
 
-		self.weights = np.random.rand(nodes, self.input_size+1)
+		self.weights = np.random.rand(nodes, self.input_size)
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -65,7 +66,8 @@ class Softmax:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-	
+		x = x.reshape((1, self.input_size))
+		#x = np.hstack(([[1]], x)) #Temporary for debugging
 		return softmax(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
@@ -82,7 +84,7 @@ class MaxPool:
 	def output(self, x):
 		'''Assuming x is some tensor of shape [h x w x d]
 		Output of the form {nodes x 1} as per usual'''
-		x = x.reshape(input_shape)
+		x = x.reshape(self.input_shape)
 		f = self.f #Size of partitions being looked at
 		s = self.s #Stride over the input
 		
@@ -108,6 +110,8 @@ class Convolutional:
 
 	def __init__(self, input_shape, number_filters,spatial_extent,stride,zero_padding):
 		
+		self.input_shape = input_shape
+
 		self.k = number_filters
 		self.f = spatial_extent
 		self.s = stride
@@ -122,7 +126,7 @@ class Convolutional:
 		self.weights = np.random.rand(self.k, self.f * self.f*input_shape[2])
 
 	def im2col(self, x):
-		x = x.reshape(input_shape)
+		x = x.reshape(self.input_shape)
 		total_fields = self.w*self.h
 		x_h,x_w,x_d = x.shape
 		X_col = np.empty((self.f*self.f*x_d,total_fields))
@@ -141,8 +145,29 @@ class Convolutional:
 	def output(self, x):
 		x_col = self.im2col(x)
 		out = np.dot(self.weights,x_col)
-		out = out.reshape(self.h*self.w*self.d)
+		out = out.reshape(self.h,self.w,self.d)
 		return out
 
 	def derivative(self, x):
 		return x #lol
+
+
+#Debug section
+if __name__ == '__main__':
+	x = np.random.rand(32,32,3)
+
+	layer_1 = Convolutional(x.shape,12,1,1,0)
+	layer_1_os = layer_1.output(x).shape
+	print layer_1_os
+	print np.prod(np.array(layer_1_os))
+	layer_2 = Relu(layer_1_os, np.prod(np.array(layer_1_os)))
+	layer_2_os = layer_2.output(layer_1.output(x)).shape
+	print layer_2_os
+
+	layer_3 = MaxPool(layer_1_os,2,2)
+	layer_3_os = layer_3.output(layer_2.output(layer_1.output(x))).shape
+	print layer_3_os
+
+	layer_4 = Softmax(layer_3_os, 10)
+	layer_4_os = layer_4.output(layer_3.output(layer_2.output(layer_1.output(x))))
+	print layer_4_os

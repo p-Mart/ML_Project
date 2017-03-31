@@ -37,7 +37,7 @@ class Network:
 		#Feedforward calculation of the outputs at each layer.
 		for i in range(self.depth):
 			if(i < self.depth - 1):
-				outputs.append(np.hstack((1,self.layers[i].output(x))))
+				outputs.append(np.vstack(([[1]],self.layers[i].output(x))))
 				x = outputs[i]
 			else:
 				outputs.append(self.layers[i].output(x))
@@ -136,7 +136,7 @@ class Network:
 
 		for i in range(Y.shape[0]):
 			x = X[i,:]
-			predictions[i] = self.getOutputs(x)[self.depth-1]
+			predictions[i] = self.getOutputs(x)[self.depth-1].flatten()
 		
 		return predictions
 

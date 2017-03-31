@@ -13,6 +13,6 @@ def softmax(x):
 	#Note the x - np.max(x).
 	#This is for numerical stability in case np.exp encounters
 	#large values of x.
-	
 	f = np.exp(x - np.max(x))
+
 	return f / np.sum(f) #Return normalized probabilities
