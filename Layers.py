@@ -3,11 +3,12 @@ from Nodes import *
 
 class Sigmoid:
 
-	def __init__(self, input_size, nodes):
-		self.input_size = input_size
+	def __init__(self, input_shape, nodes):
+		self.input_shape = input_shape
+		self.input_size = sum(input_shape)
 		self.nodes = nodes
 
-		self.weights = np.random.rand(nodes, input_size+1)
+		self.weights = np.random.rand(nodes, self.input_size+1)
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -23,11 +24,12 @@ class Sigmoid:
 
 class Relu:
 
-	def __init__(self, input_size, nodes):
-		self.input_size = input_size
+	def __init__(self, input_shape, nodes):
+		self.input_shape = input_shape
+		self.input_size = sum(input_shape)
 		self.nodes = nodes
 
-		self.weights = np.random.rand(nodes, input_size+1)
+		self.weights = np.random.rand(nodes, self.input_size+1)
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -50,11 +52,12 @@ class Relu:
 
 class Softmax:
 	'''Note: softmax must be used for categorical crossentropy'''
-	def __init__(self, input_size, nodes):
-		self.input_size = input_size
+	def __init__(self, input_shape, nodes):
+		self.input_shape = input_shape
+		self.input_size = sum(input_shape)
 		self.nodes = nodes
 
-		self.weights = np.random.rand(nodes, input_size+1)
+		self.weights = np.random.rand(nodes, self.input_size+1)
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -71,12 +74,15 @@ class Softmax:
 
 class MaxPool:
 
-	def __init__(self, receptive_field, stride):
+	def __init__(self, input_shape, receptive_field, stride):
+		self.input_shape = input_shape
 		self.f = receptive_field
 		self.s = stride
 
-	def maxPool(self, x):
-		'''Assuming x is some tensor of shape [h x w x d]'''
+	def output(self, x):
+		'''Assuming x is some tensor of shape [h x w x d]
+		Output of the form {nodes x 1} as per usual'''
+		x = x.reshape(input_shape)
 		f = self.f #Size of partitions being looked at
 		s = self.s #Stride over the input
 		
@@ -94,6 +100,7 @@ class MaxPool:
 				for j in range(0,w-f+1,s):
 					pool[i/s,j/s,k] = np.max(x[i:(i+f),j:(j+f),k])
 
+		#pool = pool.reshape((output_h*output_w*output_d, 1))
 		return pool
 
 
@@ -115,6 +122,7 @@ class Convolutional:
 		self.weights = np.random.rand(self.k, self.f * self.f*input_shape[2])
 
 	def im2col(self, x):
+		x = x.reshape(input_shape)
 		total_fields = self.w*self.h
 		x_h,x_w,x_d = x.shape
 		X_col = np.empty((self.f*self.f*x_d,total_fields))
@@ -133,5 +141,8 @@ class Convolutional:
 	def output(self, x):
 		x_col = self.im2col(x)
 		out = np.dot(self.weights,x_col)
-		out = out.reshape(self.h,self.w,self.d)
+		out = out.reshape(self.h*self.w*self.d)
 		return out
+
+	def derivative(self, x):
+		return x #lol

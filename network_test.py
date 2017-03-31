@@ -47,8 +47,9 @@ plt.xlabel(r'$x_1$')
 plt.ylabel(r'$x_2$')
 plt.title("Training Set")
 
-layer_1 = Relu(X.shape[1] , hidden_nodes)
-layer_2 = Softmax(hidden_nodes, 2)
+#Model architecture
+layer_1 = Relu((X.shape[1], 0) , hidden_nodes)
+layer_2 = Softmax((hidden_nodes, 0), 2)
 
 model = Network([layer_1, layer_2],
 					learning_rate = learning_rate,
