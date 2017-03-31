@@ -34,13 +34,20 @@ class Network:
 	def getOutputs(self, sample):
 		outputs = []
 		x = sample
+
 		#Feedforward calculation of the outputs at each layer.
+		'''
 		for i in range(self.depth):
+			print i
 			if(i < self.depth - 1):
-				outputs.append(np.vstack(([[1]],self.layers[i].output(x))))
+				outputs.append(np.hstack((1,self.layers[i].output(x).flatten())))
 				x = outputs[i]
 			else:
 				outputs.append(self.layers[i].output(x))
+		'''
+		for i in range(self.depth):
+			outputs.append(self.layers[i].output(x))
+			x = outputs[i]
 		
 		return outputs
 
@@ -140,3 +147,26 @@ class Network:
 		
 		return predictions
 
+
+#Debugging
+if __name__ == '__main__':
+	x = np.random.rand(32,32,3)
+
+	layer_1 = Convolutional(x.shape,12,1,1,0)
+	#layer_1_os = layer_1.output(x).shape
+
+	layer_2 = Relu((32,32,12), np.prod(np.array([32,32,12])))
+	#layer_2_os = layer_2.output(layer_1.output(x)).shape
+
+	layer_3 = MaxPool((32,32,12),2,2)
+	#layer_3_os = layer_3.output(layer_2.output(layer_1.output(x))).shape
+
+	layer_4 = Softmax((16,16,12), 10)
+	#layer_4_os = layer_4.output(layer_3.output(layer_2.output(layer_1.output(x))))
+
+	model = Network([layer_1, layer_2,layer_3,layer_4],
+					learning_rate = 0.02,
+					func = "categorical crossentropy"
+				)
+
+	model.getOutputs(x)

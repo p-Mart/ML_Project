@@ -16,7 +16,9 @@ class Sigmoid:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-		x = x.reshape((1, self.input_size))
+		x = x.reshape((1, self.input_size - 1))
+		x = np.hstack(([[1.]], x)) # Append the bias term
+
 		return sigmoid(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
@@ -37,8 +39,9 @@ class Relu:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-		x = x.reshape((1, self.input_size))
-		#x = np.hstack(([[1]], x)) #Temporary for debugging
+		x = x.reshape((1, self.input_size - 1))
+		x = np.hstack(([[1.]], x)) # Append the bias term
+
 		return relu(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
@@ -66,8 +69,9 @@ class Softmax:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-		x = x.reshape((1, self.input_size))
-		#x = np.hstack(([[1]], x)) #Temporary for debugging
+		x = x.reshape((1, self.input_size - 1))
+		x = np.hstack(([[1.]], x)) # Append the bias term
+		
 		return softmax(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
@@ -123,12 +127,14 @@ class Convolutional:
 		self.d = self.k
 
 		#Parameter sharing of weights
-		self.weights = np.random.rand(self.k, self.f * self.f*input_shape[2])
+		#The + 1 is the weight for the bias term in each feature map
+		self.weights = np.random.rand(self.k, self.f * self.f*input_shape[2] + 1)
 
 	def im2col(self, x):
 		x = x.reshape(self.input_shape)
 		total_fields = self.w*self.h
 		x_h,x_w,x_d = x.shape
+		#Unrolled input
 		X_col = np.empty((self.f*self.f*x_d,total_fields))
 
 		k = 0
@@ -140,6 +146,9 @@ class Convolutional:
 				X_col[:,k] = receptive_field
 				k += 1
 		
+		#Append the bias term
+		X_col = np.vstack((np.ones((1,total_fields)), X_col))
+
 		return X_col
 
 	def output(self, x):
