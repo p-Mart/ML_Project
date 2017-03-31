@@ -48,7 +48,7 @@ class Network:
 		for i in range(self.depth):
 			outputs.append(self.layers[i].output(x))
 			x = outputs[i]
-		
+
 		return outputs
 
 	def getGradients(self, x, y):
@@ -60,10 +60,10 @@ class Network:
 
 		for i in range(self.depth):
 			if(i < self.depth - 1):
-				gradients.append(np.ones((self.outputs[i].shape[0] - 1,1)))
+				gradients.append(np.ones((self.outputs[i].flatten().shape[0],1)))
 			else:
 				#There's no bias unit on the final layer.
-				gradients.append(np.ones((self.outputs[i].shape[0],1)))
+				gradients.append(np.ones((self.outputs[i].flatten().shape[0],1)))
 		
 
 		#Backpropagation algorithm
@@ -94,7 +94,7 @@ class Network:
 	def train(self, X, Y, number_epochs):
 
 		#Initialize biases along with inputs to the network
-		X = np.hstack((np.ones((X.shape[0],1)), X))
+		#X = np.hstack((np.ones((X.shape[0],1)), X))
 		
 		#Keeping track of the best result
 		best_loss = np.inf
@@ -111,20 +111,23 @@ class Network:
 
 			self.outputs = self.getOutputs(x)
 			gradients = self.getGradients(x,y)
-			
 			#print outputs
 			#print gradients
 			
 			#Weight update
 			for i in range(self.depth):
 				#print self.layers[i].weights.shape
+				#print gradients[i].shape
 				#print i
 				if (i == 0):
 					self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
-										np.outer(gradients[i],x.T))
+										np.outer(gradients[i],
+											np.hstack(([1.], x.T))))
 				else:
+					#print self.outputs[i-1].shape
 					self.layers[i].weights = (self.layers[i].weights  -
-						 (self.learning_rate*np.outer(gradients[i],self.outputs[i-1])))
+						 (self.learning_rate*np.outer(gradients[i],
+						 	np.vstack(([1.], self.outputs[i-1])))))
 			
 			#Calculate the loss on this example.
 			loss = self.lossFunction(y, self.outputs[self.depth-1])
@@ -138,7 +141,7 @@ class Network:
 	def predict(self, X, Y):
 
 		#Initialize biases along with inputs to the network
-		X = np.hstack((np.ones((X.shape[0],1)), X))
+		#X = np.hstack((np.ones((X.shape[0],1)), X))
 		predictions = np.ones(Y.shape)
 
 		for i in range(Y.shape[0]):
