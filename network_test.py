@@ -37,7 +37,7 @@ for i in range(len(y_test)):
 hidden_nodes = 10
 output_nodes = 1
 learning_rate = 0.03
-number_epochs = 40000
+number_epochs = 1
 
 
 colors = ['red','blue']

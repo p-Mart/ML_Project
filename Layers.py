@@ -82,32 +82,65 @@ class MaxPool:
 
 	def __init__(self, input_shape, receptive_field, stride):
 		self.input_shape = input_shape
+		self.input_size = np.prod(np.array(input_shape))
+
 		self.f = receptive_field
 		self.s = stride
 
+		h, w, d = input_shape
+		self.output_h = (h - self.f)/self.s + 1
+		self.output_w = (w - self.f)/self.s + 1
+		self.output_d = d
+
+		self.output_size = self.output_h*self.output_w*self.output_d
+
+		self.weights  = np.zeros((self.output_size, self.input_size))
+		#self.weights = np.hstack((np.zeros((self.output_size,1)), self.weights))
+		#self.gradient = np.zeros(self.input_shape)
+
 	def output(self, x):
+
+		f = self.f #Size of partitions being looked at
+		s = self.s #Stride over the input
+
 		'''Assuming x is some tensor of shape [h x w x d]
 		Output of the form {nodes x 1} as per usual'''
 		x = x.reshape(self.input_shape)
-		f = self.f #Size of partitions being looked at
-		s = self.s #Stride over the input
+
+		#Reset the gradient
+		self.weights = np.zeros((self.output_size, self.input_size))
 		
 		#Compute the output dimensions of the max pool layer
 		h, w, d = x.shape
-		output_h = (h - f)/s + 1
-		output_w = (w - f)/s + 1
-		output_d = d
 
-		pool = np.empty((output_h,output_w,output_d))
+		pool = np.empty((self.output_h,self.output_w,self.output_d))
 		#This could probably be significantly optimized	
 		#Max pooling operation
 		for k in range(d):
 			for i in range(0,h-f+1,s):
 				for j in range(0,w-f+1,s):
-					pool[i/s,j/s,k] = np.max(x[i:(i+f),j:(j+f),k])
+					#Get the max value in the receptive field
+					max_value = np.max(x[i:(i+f),j:(j+f),k])
+					#Get the index of the maximum value in the receptive field
+					r_max_index = np.unravel_index(np.argmax(x[i:(i+f),j:(j+f),k]), 
+													x[i:(i+f),j:(j+f),k].shape)
+
+
+					pool[i/s,j/s,k] = max_value
+					pool_node = np.ravel_multi_index((i/s, j/s, k), pool.shape)
+					#self.gradient[i:(i+f),j:(j+f),k][max_index[0],max_index[1]] = 1.
+					max_index = (r_max_index[0] + i, r_max_index[1] + j, k)
+					forward_node = np.ravel_multi_index(max_index, x.shape)
+					self.weights[pool_node, forward_node] = 1.
+
+		self.weights = np.hstack((np.zeros((self.output_size, 1)), self.weights))
 
 		#pool = pool.reshape((output_h*output_w*output_d, 1))
 		return pool
+
+	def derivative(self, x):
+		#return self.gradient.flatten()
+		return 1.
 
 
 class Convolutional:
@@ -154,6 +187,7 @@ class Convolutional:
 	def output(self, x):
 		x_col = self.im2col(x)
 		out = np.dot(self.weights,x_col)
+		print self.h*self.w*self.d
 		out = out.reshape(self.h,self.w,self.d)
 		return out
 

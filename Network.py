@@ -64,29 +64,38 @@ class Network:
 			else:
 				#There's no bias unit on the final layer.
 				gradients.append(np.ones((self.outputs[i].flatten().shape[0],1)))
-		
+		#print gradients[0].shape
+		#print gradients[1].shape
 
 		#Backpropagation algorithm
 		for i in reversed(range(self.depth)):
 			#Initial gradient computed at the output layer
 			if (i == self.depth - 1):
+				#print self.outputs[i-1].shape
 				gradients[i] = (self.lossDerivative(y, self.outputs[i]) *
-								self.layers[i].derivative(self.outputs[i-1]))
-				#print y
-				#print outputs[i]
-				#print gradients[i]
+								self.layers[i].derivative(self.outputs[i-1].flatten()))
+				#print gradients[i].shape
+				#print y.shape
+				#print self.lossDerivative(y,self.outputs[i]).shape
+				#print i, self.outputs[i-1].flatten().shape
+				#print self.layers[i].derivative(self.outputs[i-1].flatten()).shape
 
 			#Gradients computed backwards from the output layer to the input layer
 			elif(i < self.depth - 1 and i > 0):
+				#print i, self.layers[i+1].weights.T[1:,:].shape
+				#print gradients[i+1].shape
+				#print self.layers[i].derivative(self.outputs[i-1].flatten()).shape
+				#print self.outputs[i-1].flatten().shape
+
+				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
+								self.layers[i].derivative(self.outputs[i-1].flatten()))
+			else:
 				#print i, self.layers[i+1].weights.shape
 				#print outputs[i].shape
 				#print gradients[i].shape
 				#print gradients[i+1].shape
 				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
-								self.layers[i].derivative(self.outputs[i-1]))
-			else:
-				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
-								self.layers[i].derivative(x))
+								self.layers[i].derivative(x.flatten()))
 				
 
 		return gradients
@@ -102,12 +111,13 @@ class Network:
 		#Stochastic Gradient Descent
 		for i in range(number_epochs):
 			
-			sys.stdout.write("Training progress: [%d / %d] \r" %(i + 1, number_epochs))
-			sys.stdout.flush()
+			#sys.stdout.write("Training progress: [%d / %d] \r" %(i + 1, number_epochs))
+			#sys.stdout.flush()
 
 			sample_number = np.random.randint(X.shape[0])
 			x = X[sample_number,:]
 			y = Y[sample_number]
+			y = y.reshape((len(y), 1))
 
 			self.outputs = self.getOutputs(x)
 			gradients = self.getGradients(x,y)
@@ -118,24 +128,33 @@ class Network:
 			for i in range(self.depth):
 				#print self.layers[i].weights.shape
 				#print gradients[i].shape
+				#print x.shape
 				#print i
 				if (i == 0):
 					self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
 										np.outer(gradients[i],
-											np.hstack(([1.], x.T))))
+											np.hstack(([1.], x.flatten()))
+											)
+										)
 				else:
 					#print self.outputs[i-1].shape
+					if(self.layers[i].__class__.__name__ == "MaxPool"):
+						continue
+
 					self.layers[i].weights = (self.layers[i].weights  -
-						 (self.learning_rate*np.outer(gradients[i],
-						 	np.vstack(([1.], self.outputs[i-1])))))
+						 self.learning_rate*np.outer(gradients[i],
+						 	np.hstack(([1.], self.outputs[i-1].flatten()))
+						 	)
+						 )
+						 
 			
 			#Calculate the loss on this example.
 			loss = self.lossFunction(y, self.outputs[self.depth-1])
 			if(loss < best_loss):
 				best_loss = loss
 			
-		sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
-		sys.stdout.flush()
+		#sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
+		#sys.stdout.flush()
 
 
 	def predict(self, X, Y):
@@ -154,22 +173,47 @@ class Network:
 #Debugging
 if __name__ == '__main__':
 	x = np.random.rand(32,32,3)
+	y = np.array([0.,0.,0.,0.,1.,0.,0.,0.,0.,0.])
 
 	layer_1 = Convolutional(x.shape,12,1,1,0)
 	#layer_1_os = layer_1.output(x).shape
-
+	#print layer_1.weights.shape
 	layer_2 = Relu((32,32,12), np.prod(np.array([32,32,12])))
 	#layer_2_os = layer_2.output(layer_1.output(x)).shape
-
+	#print layer_2.weights.shape
 	layer_3 = MaxPool((32,32,12),2,2)
 	#layer_3_os = layer_3.output(layer_2.output(layer_1.output(x))).shape
 
 	layer_4 = Softmax((16,16,12), 10)
 	#layer_4_os = layer_4.output(layer_3.output(layer_2.output(layer_1.output(x))))
-
+	#print layer_4.weights.shape
 	model = Network([layer_1, layer_2,layer_3,layer_4],
 					learning_rate = 0.02,
 					func = "categorical crossentropy"
 				)
 
-	model.getOutputs(x)
+	#print "\n"
+	model.outputs = model.getOutputs(x)
+	#print model.outputs[0].flatten().shape
+	#print model.outputs[1].flatten().shape
+	#print model.outputs[2].flatten().shape
+	#print model.outputs[3].flatten().shape
+
+	print  "WEIGHTS"
+	print layer_1.weights.shape
+	print layer_2.weights.shape
+	print layer_3.weights.shape
+	print layer_4.weights.shape
+	gradients = model.getGradients(x, y)
+	print "GRADIENTS"
+	print gradients[0].shape
+	print gradients[1].shape
+	print gradients[2].shape
+	print gradients[3].shape
+
+	
+	print gradients[1]
+	print gradients[2]
+
+
+
