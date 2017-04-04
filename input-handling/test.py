@@ -1,9 +1,18 @@
 import WordTimeliner
+import os
 
-with open('audio.flac', 'rd') as a:
-	words = WordTimeliner.getListOfWords('Go do you hear', a)
+directory = '/home/genous/Downloads/LibriSpeech/dev-clean/'
 
-	for i in words:
-		print(words[i].getWord())
-		print(words[i].getStartTime())
-		print(words[i].getEndTime())
+
+for filename in os.listdir(directory):
+	for filename2 in os.listdir(os.path.join(directory, filename)):
+		for filename3 in os.listdir( os.path.join(directory, filename, filename2)):
+		    
+		    if filename3.endswith(".txt"):
+		    	with open(os.path.join(directory, filename, filename2, filename3), 'rd') as f:
+		    		for line in f:
+		    			audioFilePath = os.path.join(directory, filename, filename2, line.split(' ', 1)[0] + ".flac")
+		    			print(audioFilePath)
+
+		    			transcript = line.split(' ', 1)[1]
+		    			print(transcript)
