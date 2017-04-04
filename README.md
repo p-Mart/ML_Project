@@ -3,6 +3,7 @@ Work in progress for CAP6610 to develop a speech recognition algorithm from scra
 * Soundfile: for converting audio files to .wav files
 * numpy, scipy, matplotlib
 * python_speech_features: for computing the MFCC's
+* Gentle for forced alignment
 # Contents
 ## Architecture-related modules
 * #### Nodes.py
