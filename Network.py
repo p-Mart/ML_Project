@@ -19,7 +19,11 @@ class Network:
 		elif(self.func == "categorical crossentropy"):
 			#Might need to do 1 / N
 			i = list(y).index(1.)
-			loss = -np.log(output[i])
+			if(output[i] == 0):
+				loss = np.inf
+			else:
+				loss = -np.log(output[i])
+
 			return loss
 
 	def lossDerivative(self, y, output):
@@ -116,6 +120,7 @@ class Network:
 
 			sample_number = np.random.randint(X.shape[0])
 			x = X[sample_number,:]
+			#print x.shape
 			y = Y[sample_number]
 			y = y.reshape((len(y), 1))
 
@@ -123,7 +128,8 @@ class Network:
 			gradients = self.getGradients(x,y)
 			#print outputs
 			#print gradients
-			
+			print self.layers[0].weights.shape
+
 			#Weight update
 			for i in range(self.depth):
 				#print self.layers[i].weights.shape
@@ -131,7 +137,18 @@ class Network:
 				#print x.shape
 				#print i
 				if (i == 0):
-					self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
+					if(self.layers[i].__class__.__name__ == "Convolutional"):
+						print self.layers[i].im2col(x).flatten().shape
+						temp_weights = (self.learning_rate*np.outer(gradients[i],
+							 	self.layers[i].im2col(x).flatten()
+							 	)
+							 )
+
+						weights = self.layers[i].weightUpdate(temp_weights)
+						self.layers[i].weights = self.layers[i].weights - weights
+
+					else:
+						self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
 										np.outer(gradients[i],
 											np.hstack(([1.], x.flatten()))
 											)
@@ -140,12 +157,20 @@ class Network:
 					#print self.outputs[i-1].shape
 					if(self.layers[i].__class__.__name__ == "MaxPool"):
 						continue
+					elif(self.layers[i].__class__.__name__ == "Convolutional"):
+						temp_weights = (self.learning_rate*np.outer(gradients[i],
+							 	self.layers[i].im2col(outputs[i-1]).flatten()
+							 	)
+							 )
 
-					self.layers[i].weights = (self.layers[i].weights  -
-						 self.learning_rate*np.outer(gradients[i],
-						 	np.hstack(([1.], self.outputs[i-1].flatten()))
-						 	)
-						 )
+						weights = self.layers[i].weightUpdate(temp_weights)
+						self.layers[i].weights = self.layers[i].weights - weights
+					else:
+						self.layers[i].weights = (self.layers[i].weights  -
+							 self.learning_rate*np.outer(gradients[i],
+							 	np.hstack(([1.], self.outputs[i-1].flatten()))
+							 	)
+							 )
 						 
 			
 			#Calculate the loss on this example.
@@ -173,9 +198,11 @@ class Network:
 #Debugging
 if __name__ == '__main__':
 	x = np.random.rand(32,32,3)
-	y = np.array([0.,0.,0.,0.,1.,0.,0.,0.,0.,0.])
+	x = x.flatten()
+	x = x.reshape((1, len(x)))
+	y = np.array([[0.,0.,0.,0.,1.,0.,0.,0.,0.,0.]])
 
-	layer_1 = Convolutional(x.shape,12,1,1,0)
+	layer_1 = Convolutional((32,32,3),12,1,1,0)
 	#layer_1_os = layer_1.output(x).shape
 	#print layer_1.weights.shape
 	layer_2 = Relu((32,32,12), np.prod(np.array([32,32,12])))
@@ -191,7 +218,7 @@ if __name__ == '__main__':
 					learning_rate = 0.02,
 					func = "categorical crossentropy"
 				)
-
+	'''
 	#print "\n"
 	model.outputs = model.getOutputs(x)
 	#print model.outputs[0].flatten().shape
@@ -204,7 +231,7 @@ if __name__ == '__main__':
 	print layer_2.weights.shape
 	print layer_3.weights.shape
 	print layer_4.weights.shape
-	gradients = model.getGradients(x, y)
+	gradients = model.getGradients(x[0], y[0])
 	print "GRADIENTS"
 	print gradients[0].shape
 	print gradients[1].shape
@@ -214,6 +241,8 @@ if __name__ == '__main__':
 	
 	print gradients[1]
 	print gradients[2]
+	'''
+	model.train(x, y, number_epochs = 100)
 
 
 

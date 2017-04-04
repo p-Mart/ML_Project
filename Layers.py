@@ -181,18 +181,30 @@ class Convolutional:
 		
 		#Append the bias term
 		X_col = np.vstack((np.ones((1,total_fields)), X_col))
-
 		return X_col
 
 	def output(self, x):
 		x_col = self.im2col(x)
 		out = np.dot(self.weights,x_col)
-		print self.h*self.w*self.d
 		out = out.reshape(self.h,self.w,self.d)
 		return out
 
 	def derivative(self, x):
-		return x #lol
+		d = self.output(x).flatten()
+		d = d.reshape((len(d), 1))
+		return d
+
+	def weightUpdate(self, wt):
+		wt = wt.reshape((self.w*self.h, self.f*self.f*self.input_shape[2] +1, wt.shape[0]))		
+		wt = np.sum(wt, axis = 0)
+		wt = wt.T
+		weight = np.empty((self.k, self.f*self.f*self.input_shape[2] + 1))
+
+		for i in range(self.k):
+			partition = self.w*self.h
+			weight[i, :] = np.sum(wt[partition*i:partition*(i+1), :], axis = 0)
+
+		return weight
 
 
 #Debug section
