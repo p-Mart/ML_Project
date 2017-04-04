@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+import time
 from Layers import *
 
 class Network:
@@ -13,7 +14,9 @@ class Network:
 		self.outputs = []
 
 	def lossFunction(self, y, output):
-		
+		'''Computes the loss on a prediction relative to the 
+		correct prediction.'''
+
 		if (self.func == "squared error"):
 			return (0.5 * np.sum(np.power((y - output),2)))
 		elif(self.func == "categorical crossentropy"):
@@ -27,6 +30,7 @@ class Network:
 			return loss
 
 	def lossDerivative(self, y, output):
+		'''Compute the derivative of the loss function.'''
 		if (self.func == "squared error"):
 			return (-(y - output))
 		elif (self.func == "categorical crossentropy"):
@@ -40,15 +44,6 @@ class Network:
 		x = sample
 
 		#Feedforward calculation of the outputs at each layer.
-		'''
-		for i in range(self.depth):
-			print i
-			if(i < self.depth - 1):
-				outputs.append(np.hstack((1,self.layers[i].output(x).flatten())))
-				x = outputs[i]
-			else:
-				outputs.append(self.layers[i].output(x))
-		'''
 		for i in range(self.depth):
 			outputs.append(self.layers[i].output(x))
 			x = outputs[i]
@@ -56,20 +51,16 @@ class Network:
 		return outputs
 
 	def getGradients(self, x, y):
+		'''
+		Calculate the backwards pass of gradients.
+		The number of gradients per layer is the number of nodes(excluding
+		the bias unit) in that layer.
+		'''
 
+		#Construct a list containing all the gradients
 		gradients = []
-		#Calculate the backwards pass of gradients.
-		#The number of gradients per layer is the number of nodes(excluding
-		#the bias unit) in that layer.
-
 		for i in range(self.depth):
-			if(i < self.depth - 1):
-				gradients.append(np.ones((self.outputs[i].flatten().shape[0],1)))
-			else:
-				#There's no bias unit on the final layer.
-				gradients.append(np.ones((self.outputs[i].flatten().shape[0],1)))
-		#print gradients[0].shape
-		#print gradients[1].shape
+			gradients.append(np.ones((self.outputs[i].flatten().shape[0],1)))
 
 		#Backpropagation algorithm
 		for i in reversed(range(self.depth)):
@@ -105,18 +96,18 @@ class Network:
 		return gradients
 
 	def train(self, X, Y, number_epochs):
+		'''
+		Trains the network for a given number of epochs.
+		'''
 
-		#Initialize biases along with inputs to the network
-		#X = np.hstack((np.ones((X.shape[0],1)), X))
-		
 		#Keeping track of the best result
 		best_loss = np.inf
 
 		#Stochastic Gradient Descent
 		for i in range(number_epochs):
 			
-			#sys.stdout.write("Training progress: [%d / %d] \r" %(i + 1, number_epochs))
-			#sys.stdout.flush()
+			sys.stdout.write("Training progress: [%d / %d] \r" %(i + 1, number_epochs))
+			sys.stdout.flush()
 
 			sample_number = np.random.randint(X.shape[0])
 			x = X[sample_number,:]
@@ -128,7 +119,7 @@ class Network:
 			gradients = self.getGradients(x,y)
 			#print outputs
 			#print gradients
-			print self.layers[0].weights.shape
+			#print self.layers[0].weights.shape
 
 			#Weight update
 			for i in range(self.depth):
@@ -138,7 +129,7 @@ class Network:
 				#print i
 				if (i == 0):
 					if(self.layers[i].__class__.__name__ == "Convolutional"):
-						print self.layers[i].im2col(x).flatten().shape
+						#print self.layers[i].im2col(x).flatten().shape
 						temp_weights = (self.learning_rate*np.outer(gradients[i],
 							 	self.layers[i].im2col(x).flatten()
 							 	)
@@ -172,20 +163,19 @@ class Network:
 							 	)
 							 )
 						 
+			time.sleep(0.1) #Take this out if you can run at 100% CPU usage
 			
 			#Calculate the loss on this example.
 			loss = self.lossFunction(y, self.outputs[self.depth-1])
 			if(loss < best_loss):
 				best_loss = loss
 			
-		#sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
-		#sys.stdout.flush()
+		sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
+		sys.stdout.flush()
 
 
 	def predict(self, X, Y):
-
-		#Initialize biases along with inputs to the network
-		#X = np.hstack((np.ones((X.shape[0],1)), X))
+		'''Outputs predictions for a given dataset.'''
 		predictions = np.ones(Y.shape)
 
 		for i in range(Y.shape[0]):
@@ -197,52 +187,29 @@ class Network:
 
 #Debugging
 if __name__ == '__main__':
-	x = np.random.rand(32,32,3)
+	x = np.random.rand(16,16,3)
 	x = x.flatten()
 	x = x.reshape((1, len(x)))
 	y = np.array([[0.,0.,0.,0.,1.,0.,0.,0.,0.,0.]])
 
-	layer_1 = Convolutional((32,32,3),12,1,1,0)
+	layer_1 = Convolutional((16,16,3),6,1,1,0)
 	#layer_1_os = layer_1.output(x).shape
 	#print layer_1.weights.shape
-	layer_2 = Relu((32,32,12), np.prod(np.array([32,32,12])))
+	layer_2 = Relu((16,16,6), np.prod(np.array([16,16,6])))
 	#layer_2_os = layer_2.output(layer_1.output(x)).shape
 	#print layer_2.weights.shape
-	layer_3 = MaxPool((32,32,12),2,2)
+	layer_3 = MaxPool((16,16,6),2,2)
 	#layer_3_os = layer_3.output(layer_2.output(layer_1.output(x))).shape
 
-	layer_4 = Softmax((16,16,12), 10)
+	layer_4 = Softmax((8,8,6), 10)
 	#layer_4_os = layer_4.output(layer_3.output(layer_2.output(layer_1.output(x))))
 	#print layer_4.weights.shape
 	model = Network([layer_1, layer_2,layer_3,layer_4],
-					learning_rate = 0.02,
+					learning_rate = 0.2,
 					func = "categorical crossentropy"
 				)
-	'''
-	#print "\n"
-	model.outputs = model.getOutputs(x)
-	#print model.outputs[0].flatten().shape
-	#print model.outputs[1].flatten().shape
-	#print model.outputs[2].flatten().shape
-	#print model.outputs[3].flatten().shape
 
-	print  "WEIGHTS"
-	print layer_1.weights.shape
-	print layer_2.weights.shape
-	print layer_3.weights.shape
-	print layer_4.weights.shape
-	gradients = model.getGradients(x[0], y[0])
-	print "GRADIENTS"
-	print gradients[0].shape
-	print gradients[1].shape
-	print gradients[2].shape
-	print gradients[3].shape
-
-	
-	print gradients[1]
-	print gradients[2]
-	'''
-	model.train(x, y, number_epochs = 100)
-
-
+	model.train(x, y, number_epochs = 50)
+	predictions = model.predict(x, y)
+	print predictions
 
