@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 import time
+import matplotlib.pyplot as plt
 from Layers import *
 
 class Network:
@@ -79,9 +80,9 @@ class Network:
 			elif(i < self.depth - 1 and i > 0):
 				#print i, self.layers[i+1].weights.T[1:,:].shape
 				#print gradients[i+1].shape
+				#print np.count_nonzero(np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]))
 				#print self.layers[i].derivative(self.outputs[i-1].flatten()).shape
 				#print self.outputs[i-1].flatten().shape
-
 				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
 								self.layers[i].derivative(self.outputs[i-1].flatten()))
 			else:
@@ -89,6 +90,7 @@ class Network:
 				#print outputs[i].shape
 				#print gradients[i].shape
 				#print gradients[i+1].shape
+				#print self.layers[i+1].weights.shape
 				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
 								self.layers[i].derivative(x.flatten()))
 				
@@ -117,26 +119,33 @@ class Network:
 
 			self.outputs = self.getOutputs(x)
 			gradients = self.getGradients(x,y)
+
+			#print gradients[0]
 			#print outputs
 			#print gradients
 			#print self.layers[0].weights.shape
 
 			#Weight update
 			for i in range(self.depth):
-				#print self.layers[i].weights.shape
-				#print gradients[i].shape
+				#print "Weights", i, self.layers[i].weights.shape
+				#print "Gradients", i, gradients[i]
+				#print np.count_nonzero(gradients[i])
 				#print x.shape
 				#print i
 				if (i == 0):
 					if(self.layers[i].__class__.__name__ == "Convolutional"):
 						#print self.layers[i].im2col(x).flatten().shape
+						'''
 						temp_weights = (self.learning_rate*np.outer(gradients[i],
 							 	self.layers[i].im2col(x).flatten()
 							 	)
 							 )
+						'''
 
-						weights = self.layers[i].weightUpdate(temp_weights)
-						self.layers[i].weights = self.layers[i].weights - weights
+						dweights = (self.learning_rate 
+								* self.layers[i].weightUpdate(gradients[i], x))
+
+						self.layers[i].weights = self.layers[i].weights - dweights
 
 					else:
 						self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
@@ -169,7 +178,8 @@ class Network:
 			loss = self.lossFunction(y, self.outputs[self.depth-1])
 			if(loss < best_loss):
 				best_loss = loss
-			
+		
+		print y	
 		sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
 		sys.stdout.flush()
 
@@ -182,34 +192,40 @@ class Network:
 			x = X[i,:]
 			predictions[i] = self.getOutputs(x)[self.depth-1].flatten()
 		
+			time.sleep(0.1) #Take this out if you can run at 100% CPU usage
+
 		return predictions
 
 
 #Debugging
 if __name__ == '__main__':
-	x = np.random.rand(16,16,3)
+	x = np.random.rand(20,20,1)
+	plt.imshow(x[:,:,0])
+	plt.show()
 	x = x.flatten()
 	x = x.reshape((1, len(x)))
 	y = np.array([[0.,0.,0.,0.,1.,0.,0.,0.,0.,0.]])
 
-	layer_1 = Convolutional((16,16,3),6,1,1,0)
+	layer_1 = Convolutional((20,20,1),6,1,1,0)
 	#layer_1_os = layer_1.output(x).shape
 	#print layer_1.weights.shape
-	layer_2 = Relu((16,16,6), np.prod(np.array([16,16,6])))
+	layer_2 = Relu((20,20,6), np.prod(np.array([20,20,6])))
 	#layer_2_os = layer_2.output(layer_1.output(x)).shape
 	#print layer_2.weights.shape
-	layer_3 = MaxPool((16,16,6),2,2)
+	layer_3 = MaxPool((20,20,6),2,2)
 	#layer_3_os = layer_3.output(layer_2.output(layer_1.output(x))).shape
 
-	layer_4 = Softmax((8,8,6), 10)
+	layer_4 = Softmax((10,10,6), 10)
 	#layer_4_os = layer_4.output(layer_3.output(layer_2.output(layer_1.output(x))))
 	#print layer_4.weights.shape
 	model = Network([layer_1, layer_2,layer_3,layer_4],
-					learning_rate = 0.2,
+					learning_rate = 0.1,
 					func = "categorical crossentropy"
 				)
 
-	model.train(x, y, number_epochs = 50)
+	model.train(x, y, number_epochs = 1)
 	predictions = model.predict(x, y)
+	plt.imshow(model.outputs[0][:,:,0])
+	plt.show()
 	print predictions
 

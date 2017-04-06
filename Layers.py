@@ -1,5 +1,6 @@
 import numpy as np
 from Nodes import *
+from scipy.signal import convolve2d
 
 class Sigmoid:
 
@@ -30,8 +31,10 @@ class Relu:
 		self.input_shape = input_shape
 		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.nodes = nodes
-		self.weights = np.random.rand(nodes, self.input_size)
+		self.weights = (np.random.rand(nodes, self.input_size) - 0.5)/10
 
+		self.output_shape = (nodes, 1)
+		self.outputs = np.array([])
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -42,10 +45,11 @@ class Relu:
 		x = x.reshape((1, self.input_size - 1))
 		x = np.hstack(([[1.]], x)) # Append the bias term
 
-		return relu(np.dot(self.weights, x.T))
+		self.outputs =relu(np.dot(self.weights, x.T))
+		return self.outputs
 
 	def derivative(self, x):
-		outputs = self.output(x)
+		outputs = np.array(self.outputs)
 		for i in range(len(outputs)):
 			if(outputs[i] <= 0):
 				outputs[i] = 0.
@@ -61,7 +65,7 @@ class Softmax:
 		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.nodes = nodes
 
-		self.weights = np.random.rand(nodes, self.input_size)
+		self.weights = (np.random.rand(nodes, self.input_size) - 0.5)/10
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -92,6 +96,7 @@ class MaxPool:
 		self.output_w = (w - self.f)/self.s + 1
 		self.output_d = d
 
+		self.output_shape = (self.output_h,self.output_w,self.output_d)
 		self.output_size = self.output_h*self.output_w*self.output_d
 
 		self.weights  = np.zeros((self.output_size, self.input_size))
@@ -142,6 +147,12 @@ class MaxPool:
 		#return self.gradient.flatten()
 		return 1.
 
+	'''
+	def upScale(self, gradients):
+		grads = gradients.reshape(self.output_shape)
+		kron = np.kron(grads, np.ones((self.f, self.f))).flatten()
+		return kron
+	'''
 
 class Convolutional:
 
@@ -155,13 +166,21 @@ class Convolutional:
 		self.p = zero_padding
 
 		#Output shape calculation
+		if((input_shape[1] - self.f + 2*self.p)%self.s != 0 
+			or (input_shape[0] - self.f + 2*self.p) % self.s != 0):
+				raise Exception("Output shape is fractional.")
+
 		self.w = (input_shape[1] - self.f +2*self.p)/self.s + 1
 		self.h = (input_shape[0] - self.f +2*self.p)/self.s + 1
 		self.d = self.k
 
+		self.output_shape = (self.h,self.w,self.d)
+
 		#Parameter sharing of weights
 		#The + 1 is the weight for the bias term in each feature map
-		self.weights = np.random.rand(self.k, self.f * self.f*input_shape[2] + 1)
+		self.weights = (np.random.rand(self.k, self.f * self.f*input_shape[2] + 1) - 0.5)/10
+
+		self.outputs = np.array([])
 
 	def im2col(self, x):
 		x = x.reshape(self.input_shape)
@@ -184,27 +203,36 @@ class Convolutional:
 		return X_col
 
 	def output(self, x):
-		x_col = self.im2col(x)
-		out = np.dot(self.weights,x_col)
-		out = out.reshape(self.h,self.w,self.d)
+		#x_col = self.im2col(x)
+		#out = np.dot(self.weights,x_col)
+		x = x.reshape(self.input_shape)
+
+		out = np.empty(self.output_shape)
+		for i in range(self.k):
+			w = self.weights[i, 1:].reshape((self.f, self.f))
+			out[:,:,i] = (convolve2d(x[:,:,0], w, mode="valid")
+					+ self.weights[i, 0] * 1.)
+
+		self.outputs = out
 		return out
 
 	def derivative(self, x):
-		d = self.output(x).flatten()
+		d = np.array(self.outputs).flatten()
 		d = d.reshape((len(d), 1))
 		return d
 
-	def weightUpdate(self, wt):
-		wt = wt.reshape((self.w*self.h, self.f*self.f*self.input_shape[2] +1, wt.shape[0]))		
-		wt = np.sum(wt, axis = 0)
-		wt = wt.T
-		weight = np.empty((self.k, self.f*self.f*self.input_shape[2] + 1))
+	def weightUpdate(self, grads, x):
+		grad = grads.reshape(self.output_shape)
+		grad = np.rot90(grad, 2)
+		x = x.reshape(self.input_shape)
 
+		d_weights = np.empty(self.weights.shape)
 		for i in range(self.k):
-			partition = self.w*self.h
-			weight[i, :] = np.sum(wt[partition*i:partition*(i+1), :], axis = 0)
+			filter = convolve2d(x[:,:,0], grad[:,:,i],mode="valid")
+			d_weights[i, 1:] = filter.flatten()
+			d_weights[i, 0] = np.sum(filter)
 
-		return weight
+		return d_weights
 
 
 #Debug section
