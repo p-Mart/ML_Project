@@ -1,10 +1,8 @@
 import WordTimeliner
 import FeaturesExtractor
 import os
-import gentle
 
 directory = '/home/genous/Downloads/LibriSpeech/dev-clean/'
-
 
 for filename in os.listdir(directory):
 	for filename2 in os.listdir(os.path.join(directory, filename)):
@@ -23,8 +21,9 @@ for filename in os.listdir(directory):
 		    			with open(audioFilePath, 'rd') as a:
 		    				timelinedWords = WordTimeliner.getListOfWords(transcript, a)
 
-		    				for timelinedWord in timelinedWords:
+		    				for i in range(len(timelinedWords)):
+	    					
+		    					features = FeaturesExtractor.getFeatures(timelinedWords[i], audioFilePath)
 
-		    					features = FeaturesExtractor.getFeatures(audioFilePath);
-		    					print('FEATURES-SIZE:')
-		    					print(len(features))
+		    					#!!!!!!!!!!!!!!!!!!!!!!! Do SOMETING WITH FEATURES HERE !!!!!!!!!!!!!!!!!!!!!!!
+		    					# They have a variable size so we probably need to do something about that
