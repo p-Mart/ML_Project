@@ -1,6 +1,6 @@
 import numpy as np
 from Nodes import *
-from scipy.signal import convolve2d
+from scipy.signal import convolve2d, convolve
 
 class Sigmoid:
 
@@ -209,26 +209,46 @@ class Convolutional:
 
 		out = np.empty(self.output_shape)
 		for i in range(self.k):
-			w = self.weights[i, 1:].reshape((self.f, self.f))
-			out[:,:,i] = (convolve2d(x[:,:,0], w, mode="valid")
-					+ self.weights[i, 0] * 1.)
+			w = self.weights[i, 1:].reshape((self.f, self.f, self.input_shape[2]))
+			out[:,:,i] = (relu(convolve(x, w, mode="valid"))[:,:,0]
+					+ relu(self.weights[i, 0] * 1.))
 
 		self.outputs = out
 		return out
 
 	def derivative(self, x):
-		d = np.array(self.outputs).flatten()
-		d = d.reshape((len(d), 1))
-		return d
+		
+		outputs = np.array(self.outputs).flatten()
+		for i in range(len(outputs)):
+			if(outputs[i] <= 0):
+				outputs[i] = 0.
+			else:
+				outputs[i] = 1.
+
+		return outputs.reshape((len(outputs), 1))
+		
+	def gradient(self, grads):
+		grads = grads.reshape(self.output_shape)
+		gradient = np.zeros(self.input_shape)
+		for i in range(self.k):
+			w = self.weights[i, 1:].reshape((self.f, self.f, self.input_shape[2]))
+			w = np.rot90(w, 2)
+			g = grads[:,:, i].reshape(self.h, self.w, 1)
+			gradient = gradient + convolve(g, w)
+
+		return gradient
+
 
 	def weightUpdate(self, grads, x):
 		grad = grads.reshape(self.output_shape)
 		grad = np.rot90(grad, 2)
 		x = x.reshape(self.input_shape)
-
+		#print "Weight shape", self.weights.shape
+		#print "Input shape", x.shape
+		#print "Gradient shape", grad.shape
 		d_weights = np.empty(self.weights.shape)
 		for i in range(self.k):
-			filter = convolve2d(x[:,:,0], grad[:,:,i],mode="valid")
+			filter = convolve(x, grad[:,:,i].reshape(self.h, self.w, 1),mode="valid")
 			d_weights[i, 1:] = filter.flatten()
 			d_weights[i, 0] = np.sum(filter)
 

@@ -22,28 +22,38 @@ X_train = train_set[0]
 Y_train = toLogit(train_set[1])
 
 #Hyperparameters
-n_filters = 5
+#n_filters = 8
 n_classes = 10
 
 layer_1 = Convolutional(input_shape=(28,28,1),
-					number_filters=n_filters,
-					spatial_extent=3,
+					number_filters=8,
+					spatial_extent=5,
 					stride=1,zero_padding=0)
 #layer_1_os = layer_1.output(x).shape
 #print layer_1.weights.shape
+#print layer_1.output_shape
 
-layer_2 = Relu(layer_1.output_shape, np.prod(np.array(layer_1.output_shape)))
-#layer_2_os = layer_2.output(layer_1.output(x)).shape
-#print layer_2.weights.shape
-layer_3 = MaxPool(layer_1.output_shape,2,2)
-#layer_3_os = layer_3.output(layer_2.output(layer_1.output(x))).shape
+layer_2 = MaxPool(input_shape=layer_1.output_shape,
+					receptive_field=2,
+					stride=2)
+#print layer_2.output_shape
+layer_3 = Convolutional(input_shape=layer_2.output_shape,
+					number_filters=16,
+					spatial_extent=5,
+					stride=1,
+					zero_padding=0)
+#print layer_3.output_shape
+#print layer_3.weights.shape
+layer_4 = MaxPool(input_shape=layer_3.output_shape,
+					receptive_field=3,
+					stride=3)
 
-layer_4 = Softmax(layer_3.output_shape, n_classes)
-#layer_4_os = layer_4.output(layer_3.output(layer_2.output(layer_1.output(x))))
-#print layer_4.weights.shape
+layer_5 = Softmax(layer_4.output_shape, n_classes)
+
+
 model = Network(
-				[layer_1, layer_2,layer_3,layer_4],
-				learning_rate = 0.02,
+				[layer_1, layer_2,layer_3,layer_4, layer_5],
+				learning_rate = 0.01,
 				func = "categorical crossentropy"
 				)
 
@@ -56,14 +66,22 @@ Y_valid = toLogit(valid_set[1])
 
 predictions = model.predict(X_valid[:10,:], Y_valid[:10,:])
 conv_layers_visual = model.outputs[0][:,:,0]
-print model.outputs[3]
-for i in range(n_filters-1):
+#print model.outputs[3]
+for i in range(7):
 	conv_layers_visual = np.concatenate(
 							(conv_layers_visual, model.outputs[0][:,:,i+1]),
 							axis = 1)
 
+
+
 plt.imshow(conv_layers_visual)
 plt.show()
+for i in range(predictions.shape[0]):
+	max_index = np.argmax(predictions[i, :])
+	predictions[i, :] = np.zeros((1, predictions.shape[1]))
+	predictions[i, :][max_index] = 1.
+
 print predictions
+print "\n"
 print Y_valid[:10,:]
 

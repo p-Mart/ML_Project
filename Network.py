@@ -79,20 +79,30 @@ class Network:
 			#Gradients computed backwards from the output layer to the input layer
 			elif(i < self.depth - 1 and i > 0):
 				#print i, self.layers[i+1].weights.T[1:,:].shape
-				#print gradients[i+1].shape
+				#print i,  [i].shape
 				#print np.count_nonzero(np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]))
 				#print self.layers[i].derivative(self.outputs[i-1].flatten()).shape
 				#print self.outputs[i-1].flatten().shape
-				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
-								self.layers[i].derivative(self.outputs[i-1].flatten()))
+				if(self.layers[i+1].__class__.__name__ == "Convolutional"):
+					gradients[i] = (self.layers[i+1].gradient(gradients[i+1]).flatten()
+									* self.layers[i].derivative(self.outputs[i-1].flatten()))
+				else:					
+					gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1])  
+									* self.layers[i].derivative(self.outputs[i-1].flatten()))
+				
+				gradients[i] = gradients[i].reshape((gradients[i].shape[0], 1))
+
+				#print gradients[i].shape
 			else:
 				#print i, self.layers[i+1].weights.shape
 				#print outputs[i].shape
-				#print gradients[i].shape
+				#print i, gradients[i].shape
 				#print gradients[i+1].shape
 				#print self.layers[i+1].weights.shape
 				gradients[i]  = (np.dot(self.layers[i+1].weights.T[1:,:], gradients[i+1]) * 
 								self.layers[i].derivative(x.flatten()))
+
+				#print gradients[i].shape
 				
 
 		return gradients
@@ -158,13 +168,10 @@ class Network:
 					if(self.layers[i].__class__.__name__ == "MaxPool"):
 						continue
 					elif(self.layers[i].__class__.__name__ == "Convolutional"):
-						temp_weights = (self.learning_rate*np.outer(gradients[i],
-							 	self.layers[i].im2col(outputs[i-1]).flatten()
-							 	)
-							 )
+						dweights = (self.learning_rate 
+								* self.layers[i].weightUpdate(gradients[i], self.outputs[i-1].flatten()))
 
-						weights = self.layers[i].weightUpdate(temp_weights)
-						self.layers[i].weights = self.layers[i].weights - weights
+						self.layers[i].weights = self.layers[i].weights - dweights
 					else:
 						self.layers[i].weights = (self.layers[i].weights  -
 							 self.learning_rate*np.outer(gradients[i],
@@ -179,7 +186,7 @@ class Network:
 			if(loss < best_loss):
 				best_loss = loss
 		
-		print y	
+		#print y	
 		sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
 		sys.stdout.flush()
 
