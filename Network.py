@@ -197,7 +197,7 @@ class Network:
 
 		for i in range(Y.shape[0]):
 			x = X[i,:]
-			predictions[i] = self.getOutputs(x)[self.depth-1].flatten()
+			predictions[i, :] = self.getOutputs(x)[self.depth-1].flatten()
 		
 			time.sleep(0.1) #Take this out if you can run at 100% CPU usage
 

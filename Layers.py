@@ -9,7 +9,8 @@ class Sigmoid:
 		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.nodes = nodes
 
-		self.weights = np.random.rand(nodes, self.input_size)
+		self.weights = (np.sqrt(2./self.input_size) 
+					*(np.random.randn(nodes, self.input_size)))
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -31,7 +32,9 @@ class Relu:
 		self.input_shape = input_shape
 		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.nodes = nodes
-		self.weights = (np.random.rand(nodes, self.input_size) - 0.5)/10
+		
+		self.weights = (np.sqrt(2./self.input_size) 
+					*(np.random.randn(nodes, self.input_size)))
 
 		self.output_shape = (nodes, 1)
 		self.outputs = np.array([])
@@ -65,7 +68,8 @@ class Softmax:
 		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.nodes = nodes
 
-		self.weights = (np.random.rand(nodes, self.input_size) - 0.5)/10
+		self.weights = (np.sqrt(2./self.input_size) 
+					*(np.random.randn(nodes, self.input_size)))
 
 	def output(self, x):
 		'''Returns the outputs of the nodes in this layer, of
@@ -159,6 +163,7 @@ class Convolutional:
 	def __init__(self, input_shape, number_filters,spatial_extent,stride,zero_padding):
 		
 		self.input_shape = input_shape
+		self.input_size = np.prod(input_shape) + 1
 
 		self.k = number_filters
 		self.f = spatial_extent
@@ -168,7 +173,8 @@ class Convolutional:
 		#Output shape calculation
 		if((input_shape[1] - self.f + 2*self.p)%self.s != 0 
 			or (input_shape[0] - self.f + 2*self.p) % self.s != 0):
-				raise Exception("Output shape is fractional.")
+				
+			raise Exception("Output shape is fractional.")
 
 		self.w = (input_shape[1] - self.f +2*self.p)/self.s + 1
 		self.h = (input_shape[0] - self.f +2*self.p)/self.s + 1
@@ -178,7 +184,11 @@ class Convolutional:
 
 		#Parameter sharing of weights
 		#The + 1 is the weight for the bias term in each feature map
-		self.weights = (np.random.rand(self.k, self.f * self.f*input_shape[2] + 1) - 0.5)/10
+		
+		self.weights = (np.sqrt(2./self.input_size) 
+					* (np.random.randn(self.k, self.f * self.f*input_shape[2] + 1)))
+
+
 
 		self.outputs = np.array([])
 

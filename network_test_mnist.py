@@ -72,10 +72,21 @@ for i in range(7):
 							(conv_layers_visual, model.outputs[0][:,:,i+1]),
 							axis = 1)
 
-
-
 plt.imshow(conv_layers_visual)
 plt.show()
+
+
+conv_layers_2_visual = model.outputs[2][:,:,0]
+for i in range(15):
+	conv_layers_2_visual = np.concatenate(
+							(conv_layers_2_visual, model.outputs[2][:,:,i+1]),
+							axis = 1)
+
+
+plt.imshow(conv_layers_2_visual)
+plt.show()
+
+
 for i in range(predictions.shape[0]):
 	max_index = np.argmax(predictions[i, :])
 	predictions[i, :] = np.zeros((1, predictions.shape[1]))
