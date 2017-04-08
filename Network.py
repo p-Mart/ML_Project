@@ -6,10 +6,11 @@ from Layers import *
 
 class Network:
 
-	def __init__(self, layers, learning_rate = 1, func = "squared error"):
+	def __init__(self, layers, learning_rate=1, reg=0.001, func="squared error"):
 		self.layers = layers
 		self.depth = len(layers)
 
+		self.reg = reg#Regularization term
 		self.learning_rate = learning_rate
 		self.func = func
 		self.outputs = []
@@ -18,15 +19,28 @@ class Network:
 		'''Computes the loss on a prediction relative to the 
 		correct prediction.'''
 
+		#Regularization term
+		reg_term = 0.5 * self.reg
+		for i in range(self.depth):
+			reg_term += (np.sqrt(np.sum(
+						    np.power(self.layers[i].weights[:, 1:], 2)
+						    )))
+
+
+
+		#Error functions
 		if (self.func == "squared error"):
-			return (0.5 * np.sum(np.power((y - output),2)))
+			return (0.5 * np.sum(np.power((y - output),2))
+					+ reg_term)
+
 		elif(self.func == "categorical crossentropy"):
 			#Might need to do 1 / N
 			i = list(y).index(1.)
 			if(output[i] == 0):
 				loss = np.inf
 			else:
-				loss = -np.log(output[i])
+				loss = (-np.log(output[i]) 
+					 	+ reg_term)
 
 			return loss
 
@@ -40,6 +54,7 @@ class Network:
 			derivative[i] = (derivative[i] - 1.)
 			return derivative
 
+
 	def getOutputs(self, sample):
 		outputs = []
 		x = sample
@@ -51,17 +66,12 @@ class Network:
 
 		return outputs
 
-	def getGradients(self, x, y):
+	def getGradients(self, gradients, x, y):
 		'''
 		Calculate the backwards pass of gradients.
 		The number of gradients per layer is the number of nodes(excluding
 		the bias unit) in that layer.
 		'''
-
-		#Construct a list containing all the gradients
-		gradients = []
-		for i in range(self.depth):
-			gradients.append(np.ones((self.outputs[i].flatten().shape[0],1)))
 
 		#Backpropagation algorithm
 		for i in reversed(range(self.depth)):
@@ -107,89 +117,114 @@ class Network:
 
 		return gradients
 
-	def train(self, X, Y, number_epochs):
+
+	def train(self, X, Y, number_epochs, batches=50):
 		'''
 		Trains the network for a given number of epochs.
 		'''
 
+		num_samples = X.shape[0]
+
 		#Keeping track of the best result
 		best_loss = np.inf
 
-		#Stochastic Gradient Descent
-		for i in range(number_epochs):
+		#Batch Gradient Descent
+		for epoch in range(number_epochs):
 			
-			sys.stdout.write("Training progress: [%d / %d] \r" %(i + 1, number_epochs))
-			sys.stdout.flush()
+			sys.stdout.write("Epoch: %d\n" % (epoch+1))
 
-			sample_number = np.random.randint(X.shape[0])
-			x = X[sample_number,:]
-			#print x.shape
-			y = Y[sample_number]
-			y = y.reshape((len(y), 1))
+			for j in range(0, num_samples, batches):
 
-			self.outputs = self.getOutputs(x)
-			gradients = self.getGradients(x,y)
+				
 
-			#print gradients[0]
-			#print outputs
-			#print gradients
-			#print self.layers[0].weights.shape
+				#Construct a list containing all the gradients in each layer
+				gradients = []
+				for i in range(self.depth):
+					gradients.append(np.zeros((self.layers[i].output_size,1)))
 
-			#Weight update
-			for i in range(self.depth):
-				#print "Weights", i, self.layers[i].weights.shape
-				#print "Gradients", i, gradients[i]
-				#print np.count_nonzero(gradients[i])
-				#print x.shape
-				#print i
-				if (i == 0):
-					if(self.layers[i].__class__.__name__ == "Convolutional"):
-						#print self.layers[i].im2col(x).flatten().shape
-						'''
-						temp_weights = (self.learning_rate*np.outer(gradients[i],
-							 	self.layers[i].im2col(x).flatten()
-							 	)
-							 )
-						'''
+				#Sum the gradients across all the examples in the batch
+				for k in range(batches):
 
-						dweights = (self.learning_rate 
-								* self.layers[i].weightUpdate(gradients[i], x))
+					sys.stdout.write("Training Progress: [%d / %d] \r" %(k+j, num_samples))
+					sys.stdout.flush()
 
-						self.layers[i].weights = self.layers[i].weights - dweights
+					x = X[j+k,:]
+					#print x.shape
+					y = Y[j+k]
+					y = y.reshape((len(y), 1))
 
-					else:
-						self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
-										np.outer(gradients[i],
-											np.hstack(([1.], x.flatten()))
+					#Get outputs for this batch
+					self.outputs = self.getOutputs(x)
+
+					#Sum Gradient contribution
+					for d in range(self.depth):
+						gradients[d]+= self.getGradients(gradients,x,y)[d]
+
+					time.sleep(0.1) #Take this out if you can run at 100% CPU usage
+
+				#Calculate the loss on this example.
+				#loss = self.lossFunction(y, self.outputs[self.depth-1])
+
+				
+
+				#Weight update
+				for i in range(self.depth):
+					#print "Weights", i, self.layers[i].weights.shape
+					#print "Gradients", i, gradients[i]
+					#print np.count_nonzero(gradients[i])
+					#print x.shape
+					#print i
+					if (i == 0):
+						if(self.layers[i].__class__.__name__ == "Convolutional"):
+							#print self.layers[i].im2col(x).flatten().shape
+							'''
+							temp_weights = (self.learning_rate*np.outer(gradients[i],
+								 	self.layers[i].im2col(x).flatten()
+								 	)
+								 )
+							'''
+
+							dweights = (self.learning_rate 
+									* self.layers[i].weightUpdate(gradients[i], x))
+
+							self.layers[i].weights = self.layers[i].weights - dweights
+
+						else:
+							self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
+											np.outer(gradients[i],
+												np.hstack(([1.], x.flatten()))
+												)
 											)
-										)
-				else:
-					#print self.outputs[i-1].shape
-					if(self.layers[i].__class__.__name__ == "MaxPool"):
-						continue
-					elif(self.layers[i].__class__.__name__ == "Convolutional"):
-						dweights = (self.learning_rate 
-								* self.layers[i].weightUpdate(gradients[i], self.outputs[i-1].flatten()))
-
-						self.layers[i].weights = self.layers[i].weights - dweights
 					else:
-						self.layers[i].weights = (self.layers[i].weights  -
-							 self.learning_rate*np.outer(gradients[i],
-							 	np.hstack(([1.], self.outputs[i-1].flatten()))
-							 	)
-							 )
-						 
-			time.sleep(0.1) #Take this out if you can run at 100% CPU usage
+						#print self.outputs[i-1].shape
+						if(self.layers[i].__class__.__name__ == "MaxPool"):
+							continue
+						elif(self.layers[i].__class__.__name__ == "Convolutional"):
+							dweights = (self.learning_rate 
+									* self.layers[i].weightUpdate(gradients[i], self.outputs[i-1].flatten()))
+
+							self.layers[i].weights = self.layers[i].weights - dweights
+						else:
+							self.layers[i].weights = (self.layers[i].weights  -
+								 self.learning_rate*np.outer(gradients[i],
+								 	np.hstack(([1.], self.outputs[i-1].flatten()))
+								 	)
+								 )
+
+					#Weight decay
+					self.layers[i].weights[:, 1:] -= self.reg * self.layers[i].weights[:, 1:]
+						
+				#
+				#if(loss < best_loss):
+				#	best_loss = loss
+
 			
-			#Calculate the loss on this example.
-			loss = self.lossFunction(y, self.outputs[self.depth-1])
-			if(loss < best_loss):
-				best_loss = loss
+			
+
 		
 		#print y	
-		sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
-		sys.stdout.flush()
-
+		#sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
+		#sys.stdout.flush()
 
 	def predict(self, X, Y):
 		'''Outputs predictions for a given dataset.'''

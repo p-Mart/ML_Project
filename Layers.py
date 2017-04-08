@@ -7,6 +7,8 @@ class Sigmoid:
 	def __init__(self, input_shape, nodes):
 		self.input_shape = input_shape
 		self.input_size = np.prod(np.array(input_shape)) + 1
+		self.output_size = nodes
+
 		self.nodes = nodes
 
 		self.weights = (np.sqrt(2./self.input_size) 
@@ -31,6 +33,8 @@ class Relu:
 	def __init__(self, input_shape, nodes):
 		self.input_shape = input_shape
 		self.input_size = np.prod(np.array(input_shape)) + 1
+		self.output_size = nodes
+
 		self.nodes = nodes
 		
 		self.weights = (np.sqrt(2./self.input_size) 
@@ -45,8 +49,8 @@ class Relu:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-		x = x.reshape((1, self.input_size - 1))
-		x = np.hstack(([[1.]], x)) # Append the bias term
+		#x = x.reshape((1, self.input_size - 1))
+		x = np.hstack(([[1.]], x.reshape((1, self.input_size - 1)))) # Append the bias term
 
 		self.outputs =relu(np.dot(self.weights, x.T))
 		return self.outputs
@@ -66,6 +70,8 @@ class Softmax:
 	def __init__(self, input_shape, nodes):
 		self.input_shape = input_shape
 		self.input_size = np.prod(np.array(input_shape)) + 1
+		self.output_size = nodes
+
 		self.nodes = nodes
 
 		self.weights = (np.sqrt(2./self.input_size) 
@@ -77,8 +83,8 @@ class Softmax:
 
 		#Assuming that the input vector x comes in
 		#with a shape of {1 x input_size}
-		x = x.reshape((1, self.input_size - 1))
-		x = np.hstack(([[1.]], x)) # Append the bias term
+		#x = x.reshape((1, self.input_size - 1))
+		x = np.hstack(([[1.]], x.reshape((1, self.input_size - 1)))) # Append the bias term
 		
 		return softmax(np.dot(self.weights, x.T))
 
@@ -181,7 +187,7 @@ class Convolutional:
 		self.d = self.k
 
 		self.output_shape = (self.h,self.w,self.d)
-
+		self.output_size = np.prod(self.output_shape)
 		#Parameter sharing of weights
 		#The + 1 is the weight for the bias term in each feature map
 		
@@ -215,13 +221,14 @@ class Convolutional:
 	def output(self, x):
 		#x_col = self.im2col(x)
 		#out = np.dot(self.weights,x_col)
-		x = x.reshape(self.input_shape)
+		#x = x.reshape(self.input_shape)
 
 		out = np.empty(self.output_shape)
 		for i in range(self.k):
 			w = self.weights[i, 1:].reshape((self.f, self.f, self.input_shape[2]))
-			out[:,:,i] = (relu(convolve(x, w, mode="valid"))[:,:,0]
-					+ relu(self.weights[i, 0] * 1.))
+			out[:,:,i] = (relu(convolve(
+							x.reshape(self.input_shape), w, mode="valid"))[:,:,0]
+					  + relu(self.weights[i, 0] * 1.))
 
 		self.outputs = out
 		return out
