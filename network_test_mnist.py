@@ -57,7 +57,7 @@ model = Network(
 				func = "categorical crossentropy"
 				)
 
-model.train(X_train[:1000], Y_train[:1000], number_epochs = 3)
+model.train(X_train[:1000], Y_train[:1000], number_epochs = 1)
 
 del X_train, Y_train, train_set
 

@@ -6,12 +6,15 @@ from Layers import *
 
 class Network:
 
-	def __init__(self, layers, learning_rate=1, reg=0.001, func="squared error"):
+	def __init__(self, layers, learning_rate=0.01, reg=0.001, mu=0.9,func="squared error"):
 		self.layers = layers
 		self.depth = len(layers)
 
+		#Hyperparameters
 		self.reg = reg#Regularization term
 		self.learning_rate = learning_rate
+		self.mu = mu#Momentum
+
 		self.func = func
 		self.outputs = []
 
@@ -22,7 +25,7 @@ class Network:
 		#Regularization term
 		reg_term = 0.5 * self.reg
 		for i in range(self.depth):
-			reg_term += (np.sqrt(np.sum(
+			reg_term *= (np.sqrt(np.sum(
 						    np.power(self.layers[i].weights[:, 1:], 2)
 						    )))
 
@@ -118,7 +121,7 @@ class Network:
 		return gradients
 
 
-	def train(self, X, Y, number_epochs, batches=50):
+	def train(self, X, Y, number_epochs, batches=5):
 		'''
 		Trains the network for a given number of epochs.
 		'''
@@ -133,9 +136,8 @@ class Network:
 			
 			sys.stdout.write("Epoch: %d\n" % (epoch+1))
 
+			v = [] #Momentum of each layer
 			for j in range(0, num_samples, batches):
-
-				
 
 				#Construct a list containing all the gradients in each layer
 				gradients = []
@@ -160,12 +162,10 @@ class Network:
 					for d in range(self.depth):
 						gradients[d]+= self.getGradients(gradients,x,y)[d]
 
-					time.sleep(0.1) #Take this out if you can run at 100% CPU usage
+					time.sleep(0.15) #Take this out if you can run at 100% CPU usage
 
 				#Calculate the loss on this example.
 				#loss = self.lossFunction(y, self.outputs[self.depth-1])
-
-				
 
 				#Weight update
 				for i in range(self.depth):
@@ -176,40 +176,73 @@ class Network:
 					#print i
 					if (i == 0):
 						if(self.layers[i].__class__.__name__ == "Convolutional"):
-							#print self.layers[i].im2col(x).flatten().shape
-							'''
-							temp_weights = (self.learning_rate*np.outer(gradients[i],
-								 	self.layers[i].im2col(x).flatten()
-								 	)
-								 )
-							'''
-
+							#Gradient of the cost function with respect to weight
 							dweights = (self.learning_rate 
 									* self.layers[i].weightUpdate(gradients[i], x))
 
-							self.layers[i].weights = self.layers[i].weights - dweights
+							#Calculate momentum
+							if(j == 0):
+								v.append(dweights)
+							else:
+								#v[i] = v[i]*self.mu + dweights
+								v[i] = dweights
+
+							#Update weights
+							self.layers[i].weights = self.layers[i].weights - v[i]
 
 						else:
-							self.layers[i].weights =self.layers[i].weights - (self.learning_rate*
-											np.outer(gradients[i],
-												np.hstack(([1.], x.flatten()))
-												)
-											)
+							#Gradient of the cost function with respect to weight
+							dweights = (self.learning_rate
+										* np.outer(gradients[i], np.hstack(([1.], x.flatten()))
+										))
+
+							#Calculate momentum
+							if(j == 0):
+								v.append(dweights)
+							else:
+								#v[i] = v[i]*self.mu + dweights
+								v[i] = dweights
+
+							#Update weights
+							self.layers[i].weights = self.layers[i].weights - v[i]
 					else:
-						#print self.outputs[i-1].shape
+						#Dont update weights on max pool layer, they update internally
 						if(self.layers[i].__class__.__name__ == "MaxPool"):
+							#Mock momentum for consistency
+							if(j == 0):
+								v.append(np.array([]))
+							else:
+								pass
+
 							continue
+
 						elif(self.layers[i].__class__.__name__ == "Convolutional"):
 							dweights = (self.learning_rate 
 									* self.layers[i].weightUpdate(gradients[i], self.outputs[i-1].flatten()))
 
-							self.layers[i].weights = self.layers[i].weights - dweights
+							#Calculate momentum
+							if(j == 0):
+								v.append(dweights)
+							else:
+								#v[i] = v[i]*self.mu + dweights
+								v[i] = dweights
+
+							self.layers[i].weights = self.layers[i].weights - v[i]
+
 						else:
-							self.layers[i].weights = (self.layers[i].weights  -
-								 self.learning_rate*np.outer(gradients[i],
+
+							dweights = self.learning_rate*np.outer(gradients[i],
 								 	np.hstack(([1.], self.outputs[i-1].flatten()))
 								 	)
-								 )
+
+							#Calculate momentum
+							if(j == 0):
+								v.append(dweights)
+							else:
+								#v[i] = v[i]*self.mu + dweights
+								v[i] = dweights
+
+							self.layers[i].weights = self.layers[i].weights - v[i]
 
 					#Weight decay
 					self.layers[i].weights[:, 1:] -= self.reg * self.layers[i].weights[:, 1:]
