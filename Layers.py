@@ -30,10 +30,13 @@ class Sigmoid:
 
 class Relu:
 
-	def __init__(self, input_shape, nodes):
+	def __init__(self, input_shape, nodes, dropout=True, drop_prob=0.5):
 		self.input_shape = input_shape
 		self.input_size = np.prod(np.array(input_shape)) + 1
 		self.output_size = nodes
+
+		self.dropout = dropout
+		self.drop_prob = drop_prob
 
 		self.nodes = nodes
 		
@@ -52,7 +55,18 @@ class Relu:
 		#x = x.reshape((1, self.input_size - 1))
 		x = np.hstack(([[1.]], x.reshape((1, self.input_size - 1)))) # Append the bias term
 
+		if(self.dropout == False):
+			self.weights *= self.drop_prob
+
 		self.outputs =relu(np.dot(self.weights, x.T))
+		if(self.dropout == True):
+			for i in range(self.output_size):
+				drop = np.random.uniform()
+				if(drop < self.drop_prob):
+					self.outputs[i] = 0.
+
+
+
 		return self.outputs
 
 	def derivative(self, x):
@@ -226,9 +240,8 @@ class Convolutional:
 		out = np.empty(self.output_shape)
 		for i in range(self.k):
 			w = self.weights[i, 1:].reshape((self.f, self.f, self.input_shape[2]))
-			out[:,:,i] = (relu(convolve(
-							x.reshape(self.input_shape), w, mode="valid"))[:,:,0]
-					  + relu(self.weights[i, 0] * 1.))
+			out[:,:,i] = relu((convolve((x.reshape(self.input_shape)), w, mode="valid")[:,:,0])
+					  + self.weights[i, 0] * 1.)
 
 		self.outputs = out
 		return out
@@ -258,8 +271,9 @@ class Convolutional:
 
 	def weightUpdate(self, grads, x):
 		grad = grads.reshape(self.output_shape)
-		grad = np.rot90(grad, 2)
+		#grad = np.rot90(grad, 2)
 		x = x.reshape(self.input_shape)
+		x = np.rot90(x, 2)
 		#print "Weight shape", self.weights.shape
 		#print "Input shape", x.shape
 		#print "Gradient shape", grad.shape

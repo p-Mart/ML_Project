@@ -6,7 +6,10 @@ from Layers import *
 
 class Network:
 
-	def __init__(self, layers, learning_rate=0.01, reg=0.001, mu=0.9,func="squared error"):
+	def __init__(self, layers, 
+			learning_rate=0.01, reg=0, mu=0,
+			batches=10, func="squared error"):
+
 		self.layers = layers
 		self.depth = len(layers)
 
@@ -14,6 +17,7 @@ class Network:
 		self.reg = reg#Regularization term
 		self.learning_rate = learning_rate
 		self.mu = mu#Momentum
+		self.batches = batches
 
 		self.func = func
 		self.outputs = []
@@ -23,12 +27,14 @@ class Network:
 		correct prediction.'''
 
 		#Regularization term
-		reg_term = 0.5 * self.reg
-		for i in range(self.depth):
-			reg_term *= (np.sqrt(np.sum(
-						    np.power(self.layers[i].weights[:, 1:], 2)
-						    )))
+		reg_term = 0.5 * self.reg / self.batches
+		#sum_weights = 0.
+		#for i in range(self.depth):
+		#	sum_weights += (np.sum(
+		#				    np.power(self.layers[i].weights[:, 1:], 2)
+		#				    ))
 
+		#reg_term = reg_term * sum_weights
 
 
 		#Error functions
@@ -42,7 +48,7 @@ class Network:
 			if(output[i] == 0):
 				loss = np.inf
 			else:
-				loss = (-np.log(output[i]) 
+				loss = (-np.log(output[i])
 					 	+ reg_term)
 
 			return loss
@@ -55,6 +61,7 @@ class Network:
 			derivative = np.array(output)
 			i = list(y).index(1.) #Get the index containing the correct class
 			derivative[i] = (derivative[i] - 1.)
+
 			return derivative
 
 
@@ -69,19 +76,22 @@ class Network:
 
 		return outputs
 
-	def getGradients(self, gradients, x, y):
+	def getGradients(self, x, y):
 		'''
 		Calculate the backwards pass of gradients.
 		The number of gradients per layer is the number of nodes(excluding
 		the bias unit) in that layer.
 		'''
+		gradients = []
+		for i in range(self.depth):
+			gradients.append(np.zeros((self.layers[i].output_size,1)))
 
 		#Backpropagation algorithm
 		for i in reversed(range(self.depth)):
 			#Initial gradient computed at the output layer
 			if (i == self.depth - 1):
 				#print self.outputs[i-1].shape
-				gradients[i] = (self.lossDerivative(y, self.outputs[i]) *
+				gradients[i] = (1./self.batches)*(self.lossDerivative(y, self.outputs[i]) *
 								self.layers[i].derivative(self.outputs[i-1].flatten()))
 				#print gradients[i].shape
 				#print y.shape
@@ -121,7 +131,7 @@ class Network:
 		return gradients
 
 
-	def train(self, X, Y, number_epochs, batches=5):
+	def train(self, X, Y, number_epochs):
 		'''
 		Trains the network for a given number of epochs.
 		'''
@@ -131,21 +141,29 @@ class Network:
 		#Keeping track of the best result
 		best_loss = np.inf
 
+
+		v = [] #Momentum of each layer
+		for i in range(self.depth):
+			v.append(np.zeros(self.layers[i].weights.shape))
+
+		#Accumulated gradients in each layer
+		gradients = []
+		for i in range(self.depth):
+			gradients.append(np.zeros((self.layers[i].output_size,1)))
+
 		#Batch Gradient Descent
 		for epoch in range(number_epochs):
 			
 			sys.stdout.write("Epoch: %d\n" % (epoch+1))
 
-			v = [] #Momentum of each layer
-			for j in range(0, num_samples, batches):
+			
+			for j in range(0, num_samples, self.batches):
 
-				#Construct a list containing all the gradients in each layer
-				gradients = []
 				for i in range(self.depth):
-					gradients.append(np.zeros((self.layers[i].output_size,1)))
+					gradients[i] *= 0
 
 				#Sum the gradients across all the examples in the batch
-				for k in range(batches):
+				for k in range(self.batches):
 
 					sys.stdout.write("Training Progress: [%d / %d] \r" %(k+j, num_samples))
 					sys.stdout.flush()
@@ -157,15 +175,15 @@ class Network:
 
 					#Get outputs for this batch
 					self.outputs = self.getOutputs(x)
-
+					current_grad = self.getGradients(x, y)
 					#Sum Gradient contribution
 					for d in range(self.depth):
-						gradients[d]+= self.getGradients(gradients,x,y)[d]
+						gradients[d]+= current_grad[d]
 
-					time.sleep(0.15) #Take this out if you can run at 100% CPU usage
+					time.sleep(0.1) #Take this out if you can run at 100% CPU usage
 
-				#Calculate the loss on this example.
-				#loss = self.lossFunction(y, self.outputs[self.depth-1])
+				for i in range(self.depth):
+					gradients[i] /= self.batches
 
 				#Weight update
 				for i in range(self.depth):
@@ -177,87 +195,90 @@ class Network:
 					if (i == 0):
 						if(self.layers[i].__class__.__name__ == "Convolutional"):
 							#Gradient of the cost function with respect to weight
-							dweights = (self.learning_rate 
+							dweights = (1./ self.batches)*(self.learning_rate 
 									* self.layers[i].weightUpdate(gradients[i], x))
 
 							#Calculate momentum
-							if(j == 0):
-								v.append(dweights)
-							else:
-								#v[i] = v[i]*self.mu + dweights
+							if(epoch == 0):
 								v[i] = dweights
+							else:
+								v[i] = v[i]*self.mu + dweights
+								#v[i] = dweights
 
 							#Update weights
 							self.layers[i].weights = self.layers[i].weights - v[i]
 
 						else:
 							#Gradient of the cost function with respect to weight
-							dweights = (self.learning_rate
+							dweights = (1./ self.batches)*(self.learning_rate
 										* np.outer(gradients[i], np.hstack(([1.], x.flatten()))
 										))
 
 							#Calculate momentum
-							if(j == 0):
-								v.append(dweights)
-							else:
-								#v[i] = v[i]*self.mu + dweights
+							if(epoch == 0):
 								v[i] = dweights
+							else:
+								v[i] = v[i]*self.mu + dweights
+								#v[i] = dweights
 
 							#Update weights
 							self.layers[i].weights = self.layers[i].weights - v[i]
 					else:
 						#Dont update weights on max pool layer, they update internally
 						if(self.layers[i].__class__.__name__ == "MaxPool"):
-							#Mock momentum for consistency
-							if(j == 0):
-								v.append(np.array([]))
-							else:
-								pass
-
 							continue
 
 						elif(self.layers[i].__class__.__name__ == "Convolutional"):
-							dweights = (self.learning_rate 
+							dweights = (1./ self.batches)*(self.learning_rate 
 									* self.layers[i].weightUpdate(gradients[i], self.outputs[i-1].flatten()))
 
 							#Calculate momentum
-							if(j == 0):
-								v.append(dweights)
-							else:
-								#v[i] = v[i]*self.mu + dweights
+							if(epoch == 0):
 								v[i] = dweights
+							else:
+								v[i] = v[i]*self.mu + dweights
+								#v[i] = dweights
 
 							self.layers[i].weights = self.layers[i].weights - v[i]
 
 						else:
 
-							dweights = self.learning_rate*np.outer(gradients[i],
+							dweights = (1./ self.batches)*self.learning_rate*np.outer(gradients[i],
 								 	np.hstack(([1.], self.outputs[i-1].flatten()))
 								 	)
 
 							#Calculate momentum
-							if(j == 0):
-								v.append(dweights)
-							else:
-								#v[i] = v[i]*self.mu + dweights
+							if(epoch == 0):
 								v[i] = dweights
+							else:
+								v[i] = v[i]*self.mu + dweights
+								#v[i] = dweights
 
 							self.layers[i].weights = self.layers[i].weights - v[i]
 
 					#Weight decay
-					self.layers[i].weights[:, 1:] -= self.reg * self.layers[i].weights[:, 1:]
+					#self.layers[i].weights[:, 1:] -= (self.reg* self.layers[i].weights[:, 1:])
 						
-				#
-				#if(loss < best_loss):
-				#	best_loss = loss
+				
+				#Calculate the loss on this batch.
+				for k in range(self.batches):
+					if(k == 0):
+						loss = self.lossFunction(Y[j+k], self.outputs[self.depth-1])
+					else:
+						loss += self.lossFunction(Y[j+k], self.outputs[self.depth-1])
 
-			
+				loss = loss / self.batches
+				
+				if(loss < best_loss):
+					best_loss = loss
+
+				print "Loss: ", loss
 			
 
 		
 		#print y	
-		#sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
-		#sys.stdout.flush()
+		sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
+		sys.stdout.flush()
 
 	def predict(self, X, Y):
 		'''Outputs predictions for a given dataset.'''
