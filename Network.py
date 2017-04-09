@@ -140,7 +140,7 @@ class Network:
 
 		#Keeping track of the best result
 		best_loss = np.inf
-
+		loss = 0.
 
 		v = [] #Momentum of each layer
 		for i in range(self.depth):
@@ -156,16 +156,17 @@ class Network:
 			
 			sys.stdout.write("Epoch: %d\n" % (epoch+1))
 
-			
+			#Iterate over batches
 			for j in range(0, num_samples, self.batches):
 
+				#Reset the accumulated gradient to zero
 				for i in range(self.depth):
 					gradients[i] *= 0
 
 				#Sum the gradients across all the examples in the batch
 				for k in range(self.batches):
 
-					sys.stdout.write("Training Progress: [%d / %d] \r" %(k+j, num_samples))
+					sys.stdout.write("Training Progress: [%d / %d] \r" %(k+j+1, num_samples))
 					sys.stdout.flush()
 
 					x = X[j+k,:]
@@ -182,6 +183,7 @@ class Network:
 
 					time.sleep(0.1) #Take this out if you can run at 100% CPU usage
 
+				#Average the gradients
 				for i in range(self.depth):
 					gradients[i] /= self.batches
 
@@ -262,17 +264,15 @@ class Network:
 				
 				#Calculate the loss on this batch.
 				for k in range(self.batches):
-					if(k == 0):
-						loss = self.lossFunction(Y[j+k], self.outputs[self.depth-1])
-					else:
-						loss += self.lossFunction(Y[j+k], self.outputs[self.depth-1])
+					loss += self.lossFunction(Y[j+k], self.outputs[self.depth-1])
 
-				loss = loss / self.batches
-				
-				if(loss < best_loss):
-					best_loss = loss
+			#Average the loss over the number of samples
+			#Store best loss per epoch
+			loss /= num_samples	
+			if(loss < best_loss):
+				best_loss = loss
 
-				print "Loss: ", loss
+			print "\nLoss: ", loss
 			
 
 		

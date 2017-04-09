@@ -63,14 +63,14 @@ model = Network(
 				func = "categorical crossentropy"
 				)
 
-model.train(X_train[:10], Y_train[:10], number_epochs = 100)
+model.train(X_train[:100], Y_train[:100], number_epochs = 100)
 
 del X_train, Y_train, train_set
 
 X_valid = valid_set[0]
 Y_valid = toLogit(valid_set[1])
 
-predictions = model.predict(X_valid[:10,:], Y_valid[:10,:])
+predictions = model.predict(X_valid[:20,:], Y_valid[:20,:])
 
 
 conv_layers_visual = model.outputs[0][:,:,0]
@@ -100,5 +100,5 @@ for i in range(predictions.shape[0]):
 
 print predictions
 print "\n"
-print Y_valid[:10,:]
+print Y_valid[:20,:]
 
