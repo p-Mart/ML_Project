@@ -48,7 +48,7 @@ model = Network(
 				)
 
 #Plot the losses
-losses = model.train(X_train[:2000], Y_train[:2000], number_epochs = 50)
+losses = model.train(X_train[:2], Y_train[:2], number_epochs = 50)
 plt.plot(np.linspace(1, len(losses), len(losses)), np.array(losses))
 plt.show()
 
@@ -57,7 +57,7 @@ del X_train, Y_train, train_set
 #Predict on the validation set
 X_valid = valid_set[0]
 Y_valid = toLogit(valid_set[1])
-predictions = model.predict(X_valid, Y_valid)
+predictions = model.predict(X_valid[:10,:], Y_valid[:10,:])
 
 
 #Visualizing the output of conv layer
@@ -81,6 +81,6 @@ for i in range(predictions.shape[0]):
 	if(Y_valid[i, :][max_index] == 1.):
 		num_correct += 1.
 
-accuracy = 100. * num_correct / 100.
+accuracy = 100. * num_correct / float(10.)
 
 print "\nAccuracy on validation set: ", accuracy , "%"
