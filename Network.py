@@ -7,7 +7,7 @@ from Layers import *
 class Network:
 
 	def __init__(self, layers, 
-			learning_rate=0.01, reg=0, mu=0,
+			learning_rate=0.01, reg=0.0001, mu=0,
 			batches=10, func="squared error"):
 
 		self.layers = layers
@@ -27,14 +27,17 @@ class Network:
 		correct prediction.'''
 
 		#Regularization term
-		reg_term = 0.5 * self.reg / self.batches
-		#sum_weights = 0.
-		#for i in range(self.depth):
-		#	sum_weights += (np.sum(
-		#				    np.power(self.layers[i].weights[:, 1:], 2)
-		#				    ))
+		reg_term = 0.5 * self.reg
+		sum_weights = 0.
+		for i in range(self.depth):
+			if(self.layers[i].__class__.__name__ == "MaxPool"):
+				continue
+			else:
+				sum_weights += (np.sum(
+							    np.power(self.layers[i].weights[:, 1:], 2)
+							    ))
 
-		#reg_term = reg_term * sum_weights
+		reg_term = reg_term * sum_weights
 
 
 		#Error functions
@@ -141,6 +144,7 @@ class Network:
 		#Keeping track of the best result
 		best_loss = np.inf
 		loss = 0.
+		losses = [] #Keep track of all losses
 
 		v = [] #Momentum of each layer
 		for i in range(self.depth):
@@ -197,7 +201,7 @@ class Network:
 					if (i == 0):
 						if(self.layers[i].__class__.__name__ == "Convolutional"):
 							#Gradient of the cost function with respect to weight
-							dweights = (1./ self.batches)*(self.learning_rate 
+							dweights =(self.learning_rate 
 									* self.layers[i].weightUpdate(gradients[i], x))
 
 							#Calculate momentum
@@ -212,7 +216,7 @@ class Network:
 
 						else:
 							#Gradient of the cost function with respect to weight
-							dweights = (1./ self.batches)*(self.learning_rate
+							dweights = (self.learning_rate
 										* np.outer(gradients[i], np.hstack(([1.], x.flatten()))
 										))
 
@@ -231,7 +235,7 @@ class Network:
 							continue
 
 						elif(self.layers[i].__class__.__name__ == "Convolutional"):
-							dweights = (1./ self.batches)*(self.learning_rate 
+							dweights = (self.learning_rate 
 									* self.layers[i].weightUpdate(gradients[i], self.outputs[i-1].flatten()))
 
 							#Calculate momentum
@@ -245,7 +249,7 @@ class Network:
 
 						else:
 
-							dweights = (1./ self.batches)*self.learning_rate*np.outer(gradients[i],
+							dweights = self.learning_rate*np.outer(gradients[i],
 								 	np.hstack(([1.], self.outputs[i-1].flatten()))
 								 	)
 
@@ -259,7 +263,7 @@ class Network:
 							self.layers[i].weights = self.layers[i].weights - v[i]
 
 					#Weight decay
-					#self.layers[i].weights[:, 1:] -= (self.reg* self.layers[i].weights[:, 1:])
+					self.layers[i].weights[:, 1:] -= (self.reg* self.layers[i].weights[:, 1:])
 						
 				
 				#Calculate the loss on this batch.
@@ -273,22 +277,26 @@ class Network:
 				best_loss = loss
 
 			print "\nLoss: ", loss
-			
-
+			losses.append(loss[0])			
 		
 		#print y	
 		sys.stdout.write("\nBest Loss: %f\n" % (best_loss))
 		sys.stdout.flush()
+
+		return losses
 
 	def predict(self, X, Y):
 		'''Outputs predictions for a given dataset.'''
 		predictions = np.ones(Y.shape)
 
 		for i in range(Y.shape[0]):
+			sys.stdout.write("Progress: [%d / %d]\r" % (i+1, Y.shape[0]))
+			sys.stdout.flush()
+
 			x = X[i,:]
 			predictions[i, :] = self.getOutputs(x)[self.depth-1].flatten()
 		
-			time.sleep(0.1) #Take this out if you can run at 100% CPU usage
+			time.sleep(0.08) #Take this out if you can run at 100% CPU usage
 
 		return predictions
 
