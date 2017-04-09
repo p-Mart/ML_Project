@@ -3,7 +3,7 @@ from Nodes import *
 from scipy.signal import convolve2d, convolve
 
 class Sigmoid:
-
+	#Don't use sigmoid lol
 	def __init__(self, input_shape, nodes):
 		self.input_shape = input_shape
 		self.input_size = np.prod(np.array(input_shape)) + 1
@@ -18,8 +18,6 @@ class Sigmoid:
 		'''Returns the outputs of the nodes in this layer, of
 		shape {nodes x 1}'''
 
-		#Assuming that the input vector x comes in
-		#with a shape of {1 x input_size}
 		x = x.reshape((1, self.input_size - 1))
 		x = np.hstack(([[1.]], x)) # Append the bias term
 
@@ -50,22 +48,23 @@ class Relu:
 		'''Returns the outputs of the nodes in this layer, of
 		shape {nodes x 1}'''
 
-		#Assuming that the input vector x comes in
-		#with a shape of {1 x input_size}
-		#x = x.reshape((1, self.input_size - 1))
 		x = np.hstack(([[1.]], x.reshape((1, self.input_size - 1)))) # Append the bias term
 
+		#Dropout turns off when being used to predict
+		#and the corresponding weights get multiplied
+		#by the drop probability (see Srivastava et.al. 2014)
 		if(self.dropout == False):
 			self.weights *= self.drop_prob
 
 		self.outputs =relu(np.dot(self.weights, x.T))
+
+		#Randomly turn the output of a node to zero
+		#based on the dropout probabiltiy
 		if(self.dropout == True):
 			for i in range(self.output_size):
 				drop = np.random.uniform()
 				if(drop < self.drop_prob):
 					self.outputs[i] = 0.
-
-
 
 		return self.outputs
 
@@ -95,15 +94,15 @@ class Softmax:
 		'''Returns the outputs of the nodes in this layer, of
 		shape {nodes x 1}'''
 
-		#Assuming that the input vector x comes in
-		#with a shape of {1 x input_size}
-		#x = x.reshape((1, self.input_size - 1))
 		x = np.hstack(([[1.]], x.reshape((1, self.input_size - 1)))) # Append the bias term
 		
 		return softmax(np.dot(self.weights, x.T))
 
 	def derivative(self, x):
-		#return (self.output(x)*(1 - self.output(x)))#This MIGHT be wrong
+		'''Only doing this because this layer gets used with
+		categorical crossentropy loss and thus the derivative
+		gets cancelled out with the derivative of the loss function'''
+
 		return 1.
 
 class MaxPool:
@@ -190,7 +189,7 @@ class Convolutional:
 		self.s = stride
 		self.p = zero_padding
 
-		#Output shape calculation
+		#Output shape calculation (might need to change this)
 		if((input_shape[1] - self.f + 2*self.p)%self.s != 0 
 			or (input_shape[0] - self.f + 2*self.p) % self.s != 0):
 				
@@ -212,6 +211,7 @@ class Convolutional:
 
 		self.outputs = np.array([])
 
+	'''
 	def im2col(self, x):
 		x = x.reshape(self.input_shape)
 		total_fields = self.w*self.h
@@ -231,11 +231,9 @@ class Convolutional:
 		#Append the bias term
 		X_col = np.vstack((np.ones((1,total_fields)), X_col))
 		return X_col
+	'''
 
 	def output(self, x):
-		#x_col = self.im2col(x)
-		#out = np.dot(self.weights,x_col)
-		#x = x.reshape(self.input_shape)
 
 		out = np.empty(self.output_shape)
 		for i in range(self.k):
@@ -247,6 +245,9 @@ class Convolutional:
 		return out
 
 	def derivative(self, x):
+		#Using ReLU activation, this takes the
+		#same form as the derivative of the ReLU
+		#layer.
 		
 		outputs = np.array(self.outputs).flatten()
 		for i in range(len(outputs)):
@@ -258,6 +259,9 @@ class Convolutional:
 		return outputs.reshape((len(outputs), 1))
 		
 	def gradient(self, grads):
+		'''Calculate the delta term propagated backwards
+		from this layer'''
+
 		grads = grads.reshape(self.output_shape)
 		gradient = np.zeros(self.input_shape)
 		for i in range(self.k):
@@ -270,13 +274,12 @@ class Convolutional:
 
 
 	def weightUpdate(self, grads, x):
+		'''Update the shared weights for this layer.'''
 		grad = grads.reshape(self.output_shape)
-		#grad = np.rot90(grad, 2)
+
 		x = x.reshape(self.input_shape)
 		x = np.rot90(x, 2)
-		#print "Weight shape", self.weights.shape
-		#print "Input shape", x.shape
-		#print "Gradient shape", grad.shape
+		
 		d_weights = np.empty(self.weights.shape)
 		for i in range(self.k):
 			filter = convolve(x, grad[:,:,i].reshape(self.h, self.w, 1),mode="valid")
@@ -284,24 +287,3 @@ class Convolutional:
 			d_weights[i, 0] = np.sum(filter)
 
 		return d_weights
-
-
-#Debug section
-if __name__ == '__main__':
-	x = np.random.rand(32,32,3)
-
-	layer_1 = Convolutional(x.shape,12,1,1,0)
-	layer_1_os = layer_1.output(x).shape
-	print layer_1_os
-	print np.prod(np.array(layer_1_os))
-	layer_2 = Relu(layer_1_os, np.prod(np.array(layer_1_os)))
-	layer_2_os = layer_2.output(layer_1.output(x)).shape
-	print layer_2_os
-
-	layer_3 = MaxPool(layer_1_os,2,2)
-	layer_3_os = layer_3.output(layer_2.output(layer_1.output(x))).shape
-	print layer_3_os
-
-	layer_4 = Softmax(layer_3_os, 10)
-	layer_4_os = layer_4.output(layer_3.output(layer_2.output(layer_1.output(x))))
-	print layer_4_os
