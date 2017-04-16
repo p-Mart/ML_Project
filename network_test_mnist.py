@@ -48,9 +48,12 @@ model = Network(
 				)
 
 #Plot the losses
-losses = model.train(X_train[:2], Y_train[:2], number_epochs = 50)
-plt.plot(np.linspace(1, len(losses), len(losses)), np.array(losses))
-plt.show()
+#losses = model.train(X_train[:100], Y_train[:100], number_epochs = 15)
+model.load("mnist_model")
+#model.save("mnist_model")
+
+#plt.plot(np.linspace(1, len(losses), len(losses)), np.array(losses))
+#plt.show()
 
 del X_train, Y_train, train_set
 
@@ -77,6 +80,8 @@ for i in range(predictions.shape[0]):
 	max_index = np.argmax(predictions[i, :])
 	predictions[i, :] = np.zeros((1, predictions.shape[1]))
 	predictions[i, :][max_index] = 1.
+
+	print predictions[i, :]
 
 	if(Y_valid[i, :][max_index] == 1.):
 		num_correct += 1.

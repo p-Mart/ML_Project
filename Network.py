@@ -258,13 +258,35 @@ class Network:
 		'''Outputs predictions for a given dataset.'''
 		predictions = np.ones(Y.shape)
 
+		#Take off dropout when predicting
+		for i in range(self.depth):
+			if(self.layers[i].__class__.__name__== "Relu"):
+				self.layers[i].dropout = False
+
+		#Predict on dataset
 		for i in range(Y.shape[0]):
 			sys.stdout.write("Progress: [%d / %d]\r" % (i+1, Y.shape[0]))
 			sys.stdout.flush()
 
 			x = X[i,:]
-			predictions[i, :] = self.getOutputs(x)[self.depth-1].flatten()
+			self.outputs = self.getOutputs(x)
+			predictions[i, :] = self.outputs[self.depth-1].flatten()
 		
 			time.sleep(0.08) #Take this out if you can run at 100% CPU usage
 
 		return predictions
+
+	##############################
+	#Weight saving and loading
+	##############################	
+
+	def save(self, file_name):
+		for i in range(self.depth):
+			f = file_name + '_' + str(i)
+			np.save(f, self.layers[i].weights)
+
+	def load(self, file_name):
+		for i in range(self.depth):
+			f = file_name + '_' + str(i) + '.npy'
+			print self.layers[i].weights.shape
+			self.layers[i].weights = np.load(f)
