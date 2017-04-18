@@ -18,21 +18,21 @@ for filename in os.listdir(directory):
 				    	with open(os.path.join(directory, filename, filename2, filename3), 'rd') as f:
 				    		for line in f:
 				    			audioFilePath = os.path.join(directory, filename, filename2, line.split(' ')[0])
-				    			print(audioFilePath)
 
 				    			word = line.split(' ')[1]
-				    			print(word)
-
+				    			
 				    			startTime = float(line.split(' ')[2])
 				    			endTime = float(line.split(' ')[3])
-
-				    			print("Start time " + str(startTime))
-				    			print("End time " + str(endTime))
 
 				    			with open(audioFilePath, 'rd') as a:
 				    				timelinedWord = WordWithTimeline(word, startTime, endTime)
 				    				
 			    					features = FeaturesExtractor.getFeatures(timelinedWord, audioFilePath)
+			    					print(audioFilePath)
+			    					print(word)
+			    					print("Start time " + str(startTime))
+				    				print("End time " + str(endTime))
+			    					print("Feature size: " + features.size)
 
 			    					#!!!!!!!!!!!!!!!!!!!!!!! Do SOMETING WITH FEATURES HERE !!!!!!!!!!!!!!!!!!!!!!!
 			    					# They have a variable size so we probably need to do something about that
