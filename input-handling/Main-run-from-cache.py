@@ -4,6 +4,9 @@ import os
 
 directory = '/home/genous/Downloads/LibriSpeech/dev-clean/'
 
+word_to_index = {}
+index_to_word = {}
+
 for filename in os.listdir(directory):
 	
 	if os.path.isdir(directory + "/" + filename):
@@ -21,6 +24,14 @@ for filename in os.listdir(directory):
 
 				    			word = line.split(' ')[1]
 				    			
+				    			if len(word_to_index) == 0:
+				    				word_to_index[word] = 0
+				    				index_to_word[0] = word
+				    			else:
+				    				if word not in word_to_index:
+				    					word_to_index[word] = max(word_to_index.values()) + 1
+				    					index_to_word[max(word_to_index.values()) + 1] = word
+
 				    			startTime = float(line.split(' ')[2])
 				    			endTime = float(line.split(' ')[3])
 

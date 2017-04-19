@@ -48,9 +48,11 @@ model = Network(
 				)
 
 #Plot the losses
-#losses = model.train(X_train[:100], Y_train[:100], number_epochs = 15)
-model.load("mnist_model")
-#model.save("mnist_model")
+for i in range(10):
+	losses = model.train(X_train[:100], Y_train[:100], number_epochs = 1)
+
+#model.load("mnist_model")
+model.save("mnist_model")
 
 #plt.plot(np.linspace(1, len(losses), len(losses)), np.array(losses))
 #plt.show()
