@@ -25,6 +25,7 @@ directory = '/home/genous/Downloads/LibriSpeech/dev-clean/84/121123/'
 numOfWords = 5
 
 words = {}
+
 outputs = np.empty((5, 5))
 features = np.empty((5,10400))
 
@@ -57,10 +58,13 @@ for i in range(5):
 
 n_classes = 5
 
-layer_1 = Convolutional(input_shape=(400,26,1),
+x = np.sqrt(feature_length)
+
+layer_1 = Convolutional(input_shape=(x, x, 1),
 					number_filters=1,
 					spatial_extent=5,
 					stride=1,zero_padding=0)
+
 layer_2 = MaxPool(input_shape=layer_1.output_shape,
 					receptive_field=2,
 					stride=2)
