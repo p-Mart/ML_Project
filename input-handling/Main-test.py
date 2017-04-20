@@ -40,9 +40,9 @@ with open(os.path.join(directory, "cache-file"), 'rd') as f:
 		startTime = float(line.split(' ')[2])
 		endTime = float(line.split(' ')[3])
 
-		with open(audioFilePath, 'rd') as a:
-			timelinedWord = WordWithTimeline(line.split(' ')[1], startTime, endTime)
-			features[5 - numOfWords,:] = FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
+		# with open(audioFilePath, 'rd') as a:
+		timelinedWord = WordWithTimeline(line.split(' ')[1], startTime, endTime)
+		features[5 - numOfWords,:] = FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
 
 		numOfWords -= 1
 
@@ -50,10 +50,9 @@ with open(os.path.join(directory, "cache-file"), 'rd') as f:
 for i in range(5):
 	outputs[i] = generateDicArray(words, words[i])
 
-print(outputs)
-#words
-#outputs
-#features
+# print(words)
+# print(outputs)
+# print(features)
 
 n_classes = 5
 	
