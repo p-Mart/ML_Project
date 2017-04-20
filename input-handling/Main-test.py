@@ -19,15 +19,15 @@ def generateDicArray(words, word):
 
 
 
-directory = '/home/genous/Downloads/LibriSpeech/dev-clean/84/121123/'
-
+# directory = '/home/genous/Downloads/LibriSpeech/dev-clean/84/121123/'
+directory = '84/121123'
 
 numOfWords = 5
-
+feature_length = 500
 words = {}
 
 outputs = np.empty((5, 5))
-features = np.empty((5,10400))
+features = np.empty((5,feature_length))
 
 with open(os.path.join(directory, "cache-file"), 'rd') as f:
 
@@ -42,9 +42,7 @@ with open(os.path.join(directory, "cache-file"), 'rd') as f:
 
 		with open(audioFilePath, 'rd') as a:
 			timelinedWord = WordWithTimeline(line.split(' ')[1], startTime, endTime)
-			
-			temp = FeaturesExtractor.getFeatures(timelinedWord, audioFilePath).flatten()
-			features[5 - numOfWords,:] = np.append(temp, np.zeros(10400 - len(temp)))
+			features[5 - numOfWords,:] = FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
 
 		numOfWords -= 1
 
@@ -52,12 +50,13 @@ with open(os.path.join(directory, "cache-file"), 'rd') as f:
 for i in range(5):
 	outputs[i] = generateDicArray(words, words[i])
 
+print(outputs)
 #words
 #outputs
 #features
 
 n_classes = 5
-
+	
 x = np.sqrt(feature_length)
 
 layer_1 = Convolutional(input_shape=(x, x, 1),
