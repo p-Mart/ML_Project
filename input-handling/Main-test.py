@@ -39,7 +39,7 @@ with open(os.path.join(directory, "cache-file"), 'rd') as f:
 		audioFilePath = os.path.join(directory, line.split(' ')[0])
 		startTime = float(line.split(' ')[2])
 		endTime = float(line.split(' ')[3])
-		print audioFilePath
+
 		with open(audioFilePath, 'rd') as a:
 			timelinedWord = WordWithTimeline(line.split(' ')[1], startTime, endTime)
 			features[5 - numOfWords,:] = FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
@@ -57,13 +57,13 @@ print(outputs)
 
 n_classes = 5
 	
-x = np.sqrt(feature_length)
+x = int(np.sqrt(feature_length))
 
 layer_1 = Convolutional(input_shape=(x, x, 1),
 					number_filters=1,
 					spatial_extent=5,
 					stride=1,zero_padding=0)
-
+print layer_1.output_shape
 layer_2 = MaxPool(input_shape=layer_1.output_shape,
 					receptive_field=2,
 					stride=1)
