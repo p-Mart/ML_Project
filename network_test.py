@@ -69,4 +69,3 @@ plt.xlabel(r'$x_1$')
 plt.ylabel(r'$x_2$')
 plt.title("Training Set")
 plt.show()
-
