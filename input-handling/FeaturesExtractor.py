@@ -31,7 +31,7 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 	sig_of_current_word = sig[sig_start:sig_end]
 
-	result = np.fft.fft(sig_of_current_word, feature_vector_size)
+	result = np.fft.fft(sig_of_current_word, feature_vector_size * 2)
 
 	#non_mirrored_result = np.resize(result, len(result) / 2)
 	
@@ -51,7 +51,7 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 
 	#features = np.zeros(feature_vector_size)
-	features = np.abs(result)
+	features = np.abs(result[:feature_vector_size])
 
 	'''
 	pad_size = int(math.ceil(float(len(normalized_amplitudes))/feature_vector_size)*feature_vector_size - len(normalized_amplitudes))
