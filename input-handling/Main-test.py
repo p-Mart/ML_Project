@@ -62,11 +62,14 @@ layer_1 = Convolutional(input_shape=(x, x, 1),
 					number_filters=1,
 					spatial_extent=5,
 					stride=1,zero_padding=0)
+
 print layer_1.output_shape
 layer_2 = MaxPool(input_shape=layer_1.output_shape,
 					receptive_field=2,
 					stride=1)
+
 layer_3 = Relu(layer_2.output_shape, layer_2.output_size)
+
 layer_4 = Softmax(layer_3.output_shape, n_classes)
 
 model = Network(
@@ -78,4 +81,11 @@ model = Network(
 
 model.train(features, outputs, number_epochs = 6)
 
-print(model.predict(features, outputs))
+predictions = model.predict(features, outputs)
+
+for i in range(predictions.shape[0]):
+	max_index = np.argmax(predictions[i, :])
+	predictions[i, :] = np.zeros((1, predictions.shape[1]))
+	predictions[i, :][max_index] = 1.
+
+	print predictions[i, :]
