@@ -117,7 +117,7 @@ model = Network(
 
 print all_features[:1]
 print all_output_labels[:1]
-
+n_examples = 1000
 losses = model.train(all_features, all_output_labels, number_epochs = 300)
 
 model.save(model_name)
@@ -140,6 +140,6 @@ for i in range(predictions.shape[0]):
 	if(all_output_labels[i, :][max_index] == 1.):
 		num_correct += 1.
 
-accuracy = 100. * num_correct / float(10.)
+accuracy = 100. * num_correct / float(n_examples)
 
 print "\nAccuracy on test set: ", accuracy , "%"
