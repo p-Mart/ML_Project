@@ -115,9 +115,9 @@ model = Network(
 print all_features[:1]
 print all_output_labels[:1]
 
-model.train(all_features[:10], all_output_labels[:10], number_epochs = 100)
+model.train(all_features, all_output_labels, number_epochs = 300)
 
-predictions = model.predict(all_features[:10], all_output_labels[:10])
+predictions = model.predict(all_features, all_output_labels)
 
 for i in range(predictions.shape[0]):
 	max_index = np.argmax(predictions[i, :])
