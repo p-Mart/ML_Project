@@ -88,28 +88,34 @@ n_classes = size_of_output_labels_vector
 	
 x = int(np.sqrt(feature_length))
 
-layer_1 = Convolutional(input_shape=(x, x, 1),
-					number_filters=1,
-					spatial_extent=5,
-					stride=1,zero_padding=0)
+#layer_1 = Convolutional(input_shape=(x, x, 1),
+#					number_filters=12,
+#					spatial_extent=5,
+#					stride=1,zero_padding=0)
 
-print layer_1.output_shape
-layer_2 = MaxPool(input_shape=layer_1.output_shape,
-					receptive_field=2,
-					stride=1)
+#print layer_1.output_shape
+#layer_2 = MaxPool(input_shape=layer_1.output_shape,
+#					receptive_field=2,
+#					stride=1)
 
-layer_3 = Relu(layer_2.output_shape, layer_2.output_size)
+layer_1 = Relu(feature_length, feature_length)
+layer_2 = Relu(feature_length, feature_length//3 * 2)
+layer_3 = Relu(layer_2.output_shape, layer_2.output_size //3 * 2)
 
 layer_4 = Softmax(layer_3.output_shape, n_classes)
 
 model = Network(
 				[layer_1, layer_2, layer_3, layer_4],
 				learning_rate = 0.01,
+				reg=0.001,
 				batches=1,
 				func = "categorical crossentropy"
 				)
 
-model.train(all_features, all_output_labels, number_epochs = 20)
+print all_features[:1]
+print all_output_labels[:1]
+
+model.train(all_features[:10], all_output_labels[:10], number_epochs = 100)
 
 predictions = model.predict(all_features, all_output_labels)
 
