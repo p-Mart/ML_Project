@@ -187,7 +187,7 @@ class Network:
 					for d in range(self.depth):
 						gradients[d]+= current_grad[d]
 
-					#time.sleep(0.12) #Take this out if you can run at 100% CPU usage
+					time.sleep(0.12) #Take this out if you can run at 100% CPU usage
 
 				#Average the gradients
 				for i in range(self.depth):
@@ -272,7 +272,7 @@ class Network:
 			self.outputs = self.getOutputs(x)
 			predictions[i, :] = self.outputs[self.depth-1].flatten()
 		
-			#time.sleep(0.08) #Take this out if you can run at 100% CPU usage
+			time.sleep(0.08) #Take this out if you can run at 100% CPU usage
 
 		return predictions
 
