@@ -61,7 +61,7 @@ for filename in os.listdir(directory):
 				    				timelinedWord = WordWithTimeline(word, startTime, endTime)
 				    				
 
-			    					all_features[index, :] = (FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)).shape
+			    					all_features[index, :] = FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
 			    					all_output_labels[index, :] = np.zeros(size_of_output_labels_vector)
 			    					
 			    					all_output_labels[index, word_to_index[word]] = 1
