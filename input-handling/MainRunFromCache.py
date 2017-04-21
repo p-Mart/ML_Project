@@ -117,11 +117,11 @@ print all_output_labels[:1]
 
 model.train(all_features[:10], all_output_labels[:10], number_epochs = 100)
 
-predictions = model.predict(all_features, all_output_labels)
+predictions = model.predict(all_features[:10], all_output_labels[:10])
 
 for i in range(predictions.shape[0]):
 	max_index = np.argmax(predictions[i, :])
 	predictions[i, :] = np.zeros((1, predictions.shape[1]))
 	predictions[i, :][max_index] = 1.
 
-	print predictions[i, :]
+	print index_to_word[max_index]
