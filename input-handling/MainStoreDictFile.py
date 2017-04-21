@@ -5,7 +5,7 @@ import os
 
 
 def run():
-	directory = '/home/genous/Downloads/LibriSpeech/dev-clean/'
+	directory = '/home/dev-clean/'
 
 	wordIndex = 0
 	wordToIndex = {}
