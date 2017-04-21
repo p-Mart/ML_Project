@@ -118,7 +118,7 @@ model = Network(
 print all_features[:1]
 print all_output_labels[:1]
 n_examples = 1000
-losses = model.train(all_features, all_output_labels, number_epochs = 300)
+losses = model.train(all_features[:n_examples], all_output_labels[:n_examples], number_epochs = 300)
 
 model.save(model_name)
 plt.plot(losses)
@@ -126,7 +126,7 @@ plt.xlabel("Epochs")
 plt.ylabel("Loss")
 plt.savefig(model_name + "_losses.png")
 
-predictions = model.predict(all_features, all_output_labels)
+predictions = model.predict(all_features[:n_examples], all_output_labels[:n_examples])
 
 accuracy = 0.
 num_correct =0.
