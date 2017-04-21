@@ -61,9 +61,6 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 	features = (features - np.mean(features)) / np.std(features)
 
-	plt.plot(features)
-	plt.show()
-
 	return features
 
 def getFeaturesMFCC(timelinedWord, audioFilePath):
