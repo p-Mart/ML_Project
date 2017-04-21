@@ -1,3 +1,4 @@
+from __future__ import division
 from WordWithTimeline import WordWithTimeline
 import FeaturesExtractor
 import os
