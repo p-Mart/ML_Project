@@ -51,7 +51,7 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 
 	#features = np.zeros(feature_vector_size)
-	features = result
+	features = np.abs(result)
 
 	'''
 	pad_size = int(math.ceil(float(len(normalized_amplitudes))/feature_vector_size)*feature_vector_size - len(normalized_amplitudes))
