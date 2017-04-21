@@ -20,7 +20,8 @@ def load_dictionary_to_global_variable():
 		MainStoreDictFile.run()
 
 	with open(os.path.join(directory, "Word_To_Index_Cache")) as word_cache:
-		for line in word_cache:
+		for line in word_cache.read().splitlines():
+			
 			word_to_index[line] = index
 			index_to_word[index] = line
 			index += 1
@@ -32,8 +33,8 @@ def load_dictionary_to_global_variable():
 
 load_dictionary_to_global_variable()
 
-all_features = np.array((data_size, feature_length))
-all_output_labels = np.array((data_size, size_of_output_labels_vector))  #  loop through all words, call word_to_index[word] and assign it to np.zeros
+all_features = np.empty((data_size, feature_length))
+all_output_labels = np.empty((data_size, size_of_output_labels_vector))  #  loop through all words, call word_to_index[word] and assign it to np.zeros
 
 
 index = 0
@@ -57,9 +58,15 @@ for filename in os.listdir(directory):
 				    			endTime = float(line.split(' ')[3])
 
 				    			with open(audioFilePath, 'rd') as a:
-				    				timelinedWord = WordWithTimeline(word, startTime, endTime)	
-			    					all_features[index:] = FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
+				    				timelinedWord = WordWithTimeline(word, startTime, endTime)
+				    				
+				    				# print all_features.shape
+				    				# print index
+				    				# print FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
 
-			    					all_output_labels[index:] = np.zeros(size_of_output_labels_vector)
-			    					all_output_labels[index:word_to_index[word]] = 1
+			    					all_features[index, :] = (FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)).shape
+			    					all_output_labels[index, :] = np.zeros(size_of_output_labels_vector)
+			    					print(len(word_to_index))
+			    					
+			    					all_output_labels[index, word_to_index[word]] = 1
 			    					index += 1
