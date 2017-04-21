@@ -68,12 +68,13 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 
 	#run through a "mid-pass filter"
+	'''
 	range_of_filter = len(features)
 	sin = np.zeros(range_of_filter)
 	for i in range(range_of_filter):
 		sin[i] = 20 * np.sin(i * (np.pi /range_of_filter))
 		features[i] *= sin[i]
-
+	'''
 
 	features = (features - np.mean(features)) / np.std(features)
 
