@@ -45,12 +45,13 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 	non_mirrored_result = result[calculate_starting_bin_index(frequency_increment):calculate_ending_bin_index(frequency_increment, rate)]
 	'''
-	normalized_amplitudes = np.abs(non_mirrored_result[:]) * (2.0 / feature_vector_size)
+	#normalized_amplitudes = np.abs(non_mirrored_result[:]) * (2.0 / feature_vector_size)
 	#x = np.abs(non_mirrored_result[:])
 	#normalized_amplitudes = (x - np.mean(x)) / np.std(x)
 
 
-	features = np.zeros(feature_vector_size)
+	#features = np.zeros(feature_vector_size)
+	features = result
 
 	'''
 	pad_size = int(math.ceil(float(len(normalized_amplitudes))/feature_vector_size)*feature_vector_size - len(normalized_amplitudes))
