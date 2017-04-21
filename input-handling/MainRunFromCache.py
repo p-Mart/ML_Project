@@ -3,10 +3,12 @@ from WordWithTimeline import WordWithTimeline
 from Network import *
 from Layers import *
 import numpy as np
+import matplotlib.pyplot as plt
 import FeaturesExtractor
 import MainStoreDictFile
 import os
 
+plt.switch_backend('agg') #Needed to plot over ssh for whatever reason
 
 #directory = '/home/dev-clean/'
 # directory = '/home/genous/Downloads/LibriSpeech/dev-clean'
@@ -97,6 +99,7 @@ x = int(np.sqrt(feature_length))
 #layer_2 = MaxPool(input_shape=layer_1.output_shape,
 #					receptive_field=2,
 #					stride=1)
+model_name = "VoiceRecognitionModel_1"
 
 layer_1 = Relu(feature_length, feature_length)
 layer_2 = Relu(feature_length, feature_length//3 * 2)
@@ -115,13 +118,28 @@ model = Network(
 print all_features[:1]
 print all_output_labels[:1]
 
-model.train(all_features, all_output_labels, number_epochs = 300)
+losses = model.train(all_features, all_output_labels, number_epochs = 300)
+
+model.save(model_name)
+plt.plot(losses)
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.savefig(model_name + "_losses.png")
 
 predictions = model.predict(all_features, all_output_labels)
 
+accuracy = 0.
+num_correct =0.
 for i in range(predictions.shape[0]):
 	max_index = np.argmax(predictions[i, :])
 	predictions[i, :] = np.zeros((1, predictions.shape[1]))
 	predictions[i, :][max_index] = 1.
 
 	print index_to_word[max_index]
+
+	if(all_output_labels[i, :][max_index] == 1.):
+		num_correct += 1.
+
+accuracy = 100. * num_correct / float(10.)
+
+print "\nAccuracy on test set: ", accuracy , "%"
