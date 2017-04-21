@@ -8,7 +8,7 @@ import MainStoreDictFile
 import os
 
 
-directory = '/home/dev-clean/'
+directory = '/home/ubuntu/dev-clean/'
 
 data_size = 1000
 feature_length = 625

@@ -5,7 +5,7 @@ import MainStoreDictFile
 import os
 import fileinput
 
-directory = '/home/dev-clean/'
+directory = '/home/ubuntu/dev-clean/'
 
 for filename in os.listdir(directory):
 	
@@ -19,6 +19,6 @@ for filename in os.listdir(directory):
 				    
 				    if filename3 == "cache-file":
 				    	for line in fileinput.input(os.path.join(directory, filename, filename2, filename3), inplace=True):
-				    		print line.replace("/home/genous/Downloads/LibriSpeech/", "/home/"),
+				    		print line.replace("/home/genous/Downloads/LibriSpeech/", "/home/ubuntu/"),
 
 

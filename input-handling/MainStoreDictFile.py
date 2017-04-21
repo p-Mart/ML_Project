@@ -5,7 +5,7 @@ import os
 
 
 def run():
-	directory = '/home/dev-clean/'
+	directory = '/home/ubuntu/dev-clean/'
 
 	wordIndex = 0
 	wordToIndex = {}
