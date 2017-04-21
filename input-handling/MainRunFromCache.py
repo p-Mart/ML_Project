@@ -9,12 +9,12 @@ directory = '/home/genous/Downloads/LibriSpeech/dev-clean/'
 data_size = 1000
 feature_length = 625
 
-word_to_index = {}
-index_to_word = {}
-size_of_output_labels_vector = 0
-
 # You can assume that Word_To_Index_Cache has unique words
 def load_dictionary_to_global_variable():
+	word_to_index = {}
+	index_to_word = {}
+	size_of_output_labels_vector = 1
+	
 	index = 0
 	if not os.path.exists(os.path.join(directory, "Word_To_Index_Cache")):
 		MainStoreDictFile.run()
@@ -26,12 +26,12 @@ def load_dictionary_to_global_variable():
 			index_to_word[index] = line
 			index += 1
 
-	size_of_output_labels_vector = index
+	return word_to_index, index_to_word, len(word_to_index)
 
 
 
 
-load_dictionary_to_global_variable()
+word_to_index, index_to_word, size_of_output_labels_vector = load_dictionary_to_global_variable()
 
 all_features = np.empty((data_size, feature_length))
 all_output_labels = np.empty((data_size, size_of_output_labels_vector))  #  loop through all words, call word_to_index[word] and assign it to np.zeros
@@ -60,13 +60,10 @@ for filename in os.listdir(directory):
 				    			with open(audioFilePath, 'rd') as a:
 				    				timelinedWord = WordWithTimeline(word, startTime, endTime)
 				    				
-				    				# print all_features.shape
-				    				# print index
-				    				# print FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
 
 			    					all_features[index, :] = (FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)).shape
 			    					all_output_labels[index, :] = np.zeros(size_of_output_labels_vector)
-			    					print(len(word_to_index))
 			    					
 			    					all_output_labels[index, word_to_index[word]] = 1
 			    					index += 1
+			    					print('.')
