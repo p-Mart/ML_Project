@@ -5,6 +5,21 @@ import numpy as np
 import soundfile as sf
 import matplotlib.pyplot as plt
 
+
+
+def calculate_starting_bin_index(bin_frequency_increment):
+    return int(20 / bin_frequency_increment)
+
+
+def calculate_ending_bin_index(bin_frequency_increment, sampling_rate):
+    ideal_ending_bin_index = 40000 / bin_frequency_increment
+
+    if ideal_ending_bin_index > (sampling_rate / 2) / bin_frequency_increment:
+        return int((sampling_rate / 2) / bin_frequency_increment)
+    else:
+        return int(ideal_ending_bin_index)
+
+
 #uses FFT
 def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 	(sig, rate) = sf.read(audioFilePath)
@@ -13,9 +28,14 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 	sig_of_current_word = sig[sig_start:sig_end]
 
+
 	result = np.fft.fft(sig_of_current_word)
 
-	non_mirrored_result = np.resize(result, len(result) / 2)
+	#non_mirrored_result = np.resize(result, len(result) / 2)
+	
+	frequency_increment = rate / len(sig_of_current_word)
+	non_mirrored_result = result[calculate_starting_bin_index(frequency_increment):calculate_ending_bin_index(frequency_increment, rate)]
+	
 	normalized_amplitudes = np.abs(non_mirrored_result[:]) * (2.0 / feature_vector_size)
 
 	features = np.zeros(feature_vector_size)
@@ -28,6 +48,8 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 			features[i] += normalized_amplitudes[raw_index]
 			raw_index += 1
 
+	plt.plot(features)
+	plt.show()
 	return features
 
 def getFeaturesMFCC(timelinedWord, audioFilePath):
