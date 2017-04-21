@@ -4,6 +4,7 @@ import os
 from Network import *
 from Layers import *
 import numpy as np
+import matplotlib.pyplot as plt
 
 def generateDicArray(words, word):
 	result = np.zeros(len(words))
@@ -47,9 +48,6 @@ with open(os.path.join(directory, "cache-file"), 'rd') as f:
 		numOfWords -= 1
 
 
-for i in range(5):
-	outputs[i] = generateDicArray(words, words[i])
-
 # print(words)
 # print(outputs)
 # print(features)
@@ -57,6 +55,14 @@ for i in range(5):
 n_classes = 5
 	
 x = int(np.sqrt(feature_length))
+
+
+for i in range(5):
+	plt.imshow(features[i].reshape((x,x)))
+	plt.show()
+	outputs[i] = generateDicArray(words, words[i])
+
+
 
 layer_1 = Convolutional(input_shape=(x, x, 1),
 					number_filters=1,
@@ -75,11 +81,12 @@ layer_4 = Softmax(layer_3.output_shape, n_classes)
 model = Network(
 				[layer_1, layer_2, layer_3, layer_4],
 				learning_rate = 0.01,
+				reg = 0.,
 				batches=1,
 				func = "categorical crossentropy"
 				)
 
-model.train(features, outputs, number_epochs = 6)
+model.train(features, outputs, number_epochs = 100)
 
 predictions = model.predict(features, outputs)
 

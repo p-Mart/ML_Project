@@ -36,7 +36,9 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 	frequency_increment = rate / len(sig_of_current_word)
 	non_mirrored_result = result[calculate_starting_bin_index(frequency_increment):calculate_ending_bin_index(frequency_increment, rate)]
 	
-	normalized_amplitudes = np.abs(non_mirrored_result[:]) * (2.0 / feature_vector_size)
+	#normalized_amplitudes = np.abs(non_mirrored_result[:]) * (2.0 / feature_vector_size)
+	x = np.abs(non_mirrored_result[:])
+	normalized_amplitudes = (x - np.mean(x)) / np.std(x)
 
 	features = np.zeros(feature_vector_size)
 
@@ -48,8 +50,8 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 			features[i] += normalized_amplitudes[raw_index]
 			raw_index += 1
 
-	plt.plot(features)
-	plt.show()
+	#plt.plot(features)
+	#plt.show()
 	return features
 
 def getFeaturesMFCC(timelinedWord, audioFilePath):
