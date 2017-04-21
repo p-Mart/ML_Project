@@ -31,13 +31,11 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 	sig_of_current_word = sig[sig_start:sig_end]
 
-	if(sig[0] == 0 and sig[100] == 0 and sig[134] == 0):
-		raise ValueError('Signal is all zeros')
-
-	result = np.fft.fft(sig_of_current_word)
+	result = np.fft.fft(sig_of_current_word, feature_vector_size)
 
 	#non_mirrored_result = np.resize(result, len(result) / 2)
 	
+	'''
 	frequency_increment = rate / (len(sig_of_current_word) * 1.0)
 	
 	if frequency_increment == 0:
@@ -46,7 +44,7 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 		print "Frequenct increments is 0!!!"
 
 	non_mirrored_result = result[calculate_starting_bin_index(frequency_increment):calculate_ending_bin_index(frequency_increment, rate)]
-	
+	'''
 	normalized_amplitudes = np.abs(non_mirrored_result[:]) * (2.0 / feature_vector_size)
 	#x = np.abs(non_mirrored_result[:])
 	#normalized_amplitudes = (x - np.mean(x)) / np.std(x)
@@ -54,12 +52,7 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 	features = np.zeros(feature_vector_size)
 
-	# new_size = len(normalized_amplitudes)
-	# while not ( new_size // feature_vector_size == 0):
-	# 	new_size += 1
-
-	
-
+	'''
 	pad_size = int(math.ceil(float(len(normalized_amplitudes))/feature_vector_size)*feature_vector_size - len(normalized_amplitudes))
 	padded = np.append(normalized_amplitudes, np.zeros(pad_size)*np.NaN)
 	shrink_size = int(len(padded) / feature_vector_size)
@@ -69,7 +62,9 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 		for j in range(shrink_size):
 			features[i] += padded[raw_index]
 			raw_index += 1
-			
+	'''
+
+
 
 	#run through a "mid-pass filter"
 	range_of_filter = len(features)
