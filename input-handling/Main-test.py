@@ -76,6 +76,6 @@ model = Network(
 				func = "categorical crossentropy"
 				)
 
-model.train(features, outputs, number_epochs = 6)
+model.train(features, outputs, number_epochs = 100000)
 
 print(model.predict(features, outputs))
