@@ -31,6 +31,8 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 	sig_of_current_word = sig[sig_start:sig_end]
 
+	if(sig[0] == 0 and sig[100] == 0 and sig[134] == 0):
+		raise ValueError('Signal is all zeros')
 
 	result = np.fft.fft(sig_of_current_word)
 

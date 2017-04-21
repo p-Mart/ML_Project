@@ -8,6 +8,8 @@ import MainStoreDictFile
 import os
 
 
+#directory = '/home/dev-clean/'
+# directory = '/home/genous/Downloads/LibriSpeech/dev-clean'
 directory = '/home/ubuntu/dev-clean/'
 
 data_size = 1000
@@ -64,12 +66,14 @@ def initialize():
 					    			with open(audioFilePath, 'rd') as a:
 					    				timelinedWord = WordWithTimeline(word, startTime, endTime)
 					    				
-
-				    					all_features[index, :] = FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
-				    					all_output_labels[index, :] = np.zeros(size_of_output_labels_vector)
-				    					
-				    					all_output_labels[index, word_to_index[word]] = 1
-				    					index += 1
+					    				try:
+					    					all_features[index, :] = FeaturesExtractor.getFeaturesFFT(timelinedWord, audioFilePath, feature_length)
+					    					all_output_labels[index, :] = np.zeros(size_of_output_labels_vector)
+					    					
+					    					all_output_labels[index, word_to_index[word]] = 1
+					    					index += 1
+					    				except ValueError:
+					    					print("skipping word, all zeros")
 
 				    					if index >= data_size:
 				    						return all_output_labels, all_features
