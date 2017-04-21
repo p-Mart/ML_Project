@@ -3,7 +3,9 @@ from python_speech_features import mfcc
 from python_speech_features import delta
 from python_speech_features import logfbank
 import numpy as np
+import math
 import soundfile as sf
+import scipy
 import matplotlib.pyplot as plt
 
 
@@ -50,13 +52,22 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 	features = np.zeros(feature_vector_size)
 
-	shrink_size = int(len(normalized_amplitudes) / feature_vector_size)
+	# new_size = len(normalized_amplitudes)
+	# while not ( new_size // feature_vector_size == 0):
+	# 	new_size += 1
+
+	
+
+	pad_size = int(math.ceil(float(len(normalized_amplitudes))/feature_vector_size)*feature_vector_size - len(normalized_amplitudes))
+	padded = np.append(normalized_amplitudes, np.zeros(pad_size)*np.NaN)
+	shrink_size = int(len(padded) / feature_vector_size)
 	
 	raw_index = 0
 	for i in range(0, feature_vector_size):
 		for j in range(shrink_size):
-			features[i] += normalized_amplitudes[raw_index]
+			features[i] += padded[raw_index]
 			raw_index += 1
+			
 
 	#run through a "mid-pass filter"
 	range_of_filter = len(features)
@@ -67,6 +78,8 @@ def getFeaturesFFT(timelinedWord, audioFilePath, feature_vector_size):
 
 
 	features = (features - np.mean(features)) / np.std(features)
+
+	
 
 	return features
 
