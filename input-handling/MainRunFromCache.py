@@ -8,7 +8,7 @@ import MainStoreDictFile
 import os
 
 
-directory = '/home/genous/Downloads/LibriSpeech/dev-clean/'
+directory = '/home/dev-clean/'
 
 data_size = 1000
 feature_length = 625
@@ -80,7 +80,7 @@ all_output_labels, all_features = initialize()
 print("DONE INITIALIZING")
 
 
-n_classes = 5
+n_classes = size_of_output_labels_vector
 	
 x = int(np.sqrt(feature_length))
 
